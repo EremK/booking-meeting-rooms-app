@@ -1,0 +1,118 @@
+// Full domain model, designed up front to cover the mandatory feature set
+// and every bonus item without a later rewrite (see local-docs/PRODUCT-DECISIONS.md §4).
+//
+// Times are always stored as UTC timestamps (`DateTime` -> Postgres `timestamptz`).
+// Office-hours/overlap validation happens in application code against Europe/Kyiv;
+// the DB-level overlap-prevention EXCLUDE constraint (bonus: race-condition
+// protection) is added by a later migration on top of this shape, not a rewrite.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String @id @default(uuid())
+  name         String
+  /// Always stored lowercased and trimmed so uniqueness is naturally case/whitespace-insensitive.
+  email        String @unique
+  passwordHash String
+
+  // Bonus: dev-mode email confirmation. Null `emailConfirmedAt` blocks booking creation.
+  emailConfirmedAt                DateTime? @db.Timestamptz(3)
+  emailConfirmationToken          String?   @unique
+  emailConfirmationTokenExpiresAt DateTime? @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  bookings      Booking[]
+  bookingSeries BookingSeries[]
+
+  @@map("users")
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String
+  floor     Int
+  capacity  Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  bookings      Booking[]
+  bookingSeries BookingSeries[]
+
+  @@map("rooms")
+}
+
+/// Bonus: weekly recurring bookings. One row per created series; each occurrence
+/// is a normal Booking row linked back via `seriesId`, so cancelling a single
+/// occurrence vs. the whole series is just cancelling one row vs. this row
+/// plus all its still-active occurrences.
+model BookingSeries {
+  id              String    @id @default(uuid())
+  roomId          String
+  userId          String
+  title           String
+  /// Start time of the first occurrence (UTC). Later occurrences are +7 days each.
+  startAt         DateTime  @db.Timestamptz(3)
+  /// End time of the first occurrence (UTC); duration is reused for every occurrence.
+  endAt           DateTime  @db.Timestamptz(3)
+  occurrenceCount Int
+  /// Cancelling the series stops it from being treated as "active" as a whole;
+  /// already-created occurrence rows are cancelled individually alongside it.
+  cancelledAt     DateTime? @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+
+  room     Room      @relation(fields: [roomId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  bookings Booking[]
+
+  @@map("booking_series")
+}
+
+model Booking {
+  id              String    @id @default(uuid())
+  roomId          String
+  userId          String
+  seriesId        String?
+  /// 0-based position within the series; null for a standalone (non-recurring) booking.
+  occurrenceIndex Int?
+  title           String
+  startAt         DateTime  @db.Timestamptz(3)
+  endAt           DateTime  @db.Timestamptz(3)
+  /// Soft-cancellation: never deleted, kept for "Мої бронювання" history.
+  /// A non-null value frees the slot again on the room grid.
+  cancelledAt     DateTime? @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+
+  room         Room           @relation(fields: [roomId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  series       BookingSeries? @relation(fields: [seriesId], references: [id])
+  notification Notification?
+
+  @@index([roomId, startAt])
+  @@index([userId, startAt])
+  @@map("bookings")
+}
+
+/// Bonus: end-of-booking notification. `bookingId` is unique so the DB itself
+/// guarantees at most one notification is ever created per booking (exactly-once).
+model Notification {
+  id          String    @id @default(uuid())
+  bookingId   String    @unique
+  userId      String
+  /// booking.endAt minus NOTIFY_BEFORE_MINUTES; when the scheduler creates the row.
+  notifyAt    DateTime  @db.Timestamptz(3)
+  /// Null until pushed over SSE; lets the client dedupe/replay after a reconnect.
+  deliveredAt DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("notifications")
+}
