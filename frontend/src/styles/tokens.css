@@ -1,0 +1,77 @@
+:root {
+  --color-bg: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-surface-alt: #eef0f2;
+  --color-border: #d8dbe0;
+  --color-text: #1c1f24;
+  --color-text-muted: #5b616b;
+  --color-accent: #2f6f5e;
+  --color-accent-contrast: #ffffff;
+  --color-accent-hover: #285e50;
+  --color-danger: #b3261e;
+  --color-danger-bg: #fbeceb;
+  --color-focus-ring: #2f6f5e;
+
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+
+  --content-width-sm: 400px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #15171a;
+    --color-surface: #1e2124;
+    --color-surface-alt: #262a2e;
+    --color-border: #383d43;
+    --color-text: #eceff1;
+    --color-text-muted: #9aa1a9;
+    --color-accent: #4f9c86;
+    --color-accent-contrast: #0b1211;
+    --color-accent-hover: #5cae97;
+    --color-danger: #e5837c;
+    --color-danger-bg: #3a2220;
+    --color-focus-ring: #4f9c86;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
