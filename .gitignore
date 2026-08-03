@@ -1,1 +1,29 @@
 /local-docs/
+
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# test coverage
+coverage/
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.local
