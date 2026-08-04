@@ -1,0 +1,97 @@
+.scrollArea {
+  overflow-x: auto;
+}
+
+.grid {
+  display: flex;
+  min-width: 760px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.timeColumn {
+  flex: 0 0 64px;
+  border-right: 1px solid var(--color-border);
+}
+
+.cornerCell {
+  height: var(--day-header-height);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.timeLabel {
+  height: var(--slot-height);
+  padding: 2px 6px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--color-surface-alt);
+}
+
+.dayColumn {
+  flex: 1 1 0;
+  min-width: 96px;
+  border-right: 1px solid var(--color-border);
+}
+
+.dayColumn:last-child {
+  border-right: none;
+}
+
+.dayHeader {
+  height: var(--day-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+  text-transform: capitalize;
+}
+
+.dayBody {
+  position: relative;
+}
+
+.slotCell {
+  height: var(--slot-height);
+  border-bottom: 1px solid var(--color-surface-alt);
+  box-sizing: border-box;
+}
+
+.booking {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-accent-hover);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  box-sizing: border-box;
+}
+
+.bookingTime {
+  font-weight: 600;
+  display: block;
+  white-space: nowrap;
+}
+
+.bookingTitle {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.bookingAuthor {
+  display: block;
+  opacity: 0.85;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
