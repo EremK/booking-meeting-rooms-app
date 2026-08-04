@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import { getRoomSchedule, type WeeklySchedule } from '../api/rooms';
+import { CreateBookingForm } from '../components/CreateBookingForm/CreateBookingForm';
 import { WeekGrid } from '../components/WeekGrid/WeekGrid';
 import { addDays, getWeekDates } from '../lib/schedule-grid';
 import { getUserTimeZone, isSameTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
@@ -15,26 +16,33 @@ export function RoomSchedulePage() {
   const [error, setError] = useState<string | null>(null);
   const userTimeZone = getUserTimeZone();
 
+  const loadSchedule = useCallback(
+    (signal: { cancelled: boolean }) => {
+      if (!roomId) return;
+      setIsLoading(true);
+      setError(null);
+      getRoomSchedule(roomId, referenceDate)
+        .then((result) => {
+          if (!signal.cancelled) setSchedule(result);
+        })
+        .catch((requestError: unknown) => {
+          if (signal.cancelled) return;
+          setError(requestError instanceof ApiError ? requestError.message : 'Сталася невідома помилка.');
+        })
+        .finally(() => {
+          if (!signal.cancelled) setIsLoading(false);
+        });
+    },
+    [roomId, referenceDate],
+  );
+
   useEffect(() => {
-    if (!roomId) return;
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-    getRoomSchedule(roomId, referenceDate)
-      .then((result) => {
-        if (!cancelled) setSchedule(result);
-      })
-      .catch((requestError: unknown) => {
-        if (cancelled) return;
-        setError(requestError instanceof ApiError ? requestError.message : 'Сталася невідома помилка.');
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
+    const signal = { cancelled: false };
+    loadSchedule(signal);
     return () => {
-      cancelled = true;
+      signal.cancelled = true;
     };
-  }, [roomId, referenceDate]);
+  }, [loadSchedule]);
 
   function goToPreviousWeek(): void {
     if (schedule) setReferenceDate(addDays(schedule.weekStartDate, -7));
@@ -76,6 +84,10 @@ export function RoomSchedulePage() {
             <p className={styles.tzNote}>
               Ваш часовий пояс: {userTimeZone}. Робочі години офісу: 09:00–19:00 за Києвом ({OFFICE_TIMEZONE}).
             </p>
+          )}
+
+          {roomId && (
+            <CreateBookingForm roomId={roomId} userTimeZone={userTimeZone} onCreated={() => loadSchedule({ cancelled: false })} />
           )}
 
           <WeekGrid weekDates={getWeekDates(schedule.weekStartDate)} bookings={schedule.bookings} userTimeZone={userTimeZone} />

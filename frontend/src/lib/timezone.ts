@@ -4,6 +4,11 @@ export function getUserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
+/** Today's calendar date (YYYY-MM-DD) as observed in `timeZone`. */
+export function getTodayInZone(timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
 /**
  * IANA has more than one valid name for the same zone (e.g. the legacy
  * `Europe/Kiev` alias for `Europe/Kyiv`); comparing raw strings can call two
@@ -105,15 +110,21 @@ function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
 }
 
 /**
- * Converts a Kyiv wall-clock date + minutes-since-midnight to the UTC instant it
- * represents (DST-aware). Used only for grid label math on the frontend -- the
- * backend is the source of truth for actual booking validation.
+ * Converts a wall-clock date + minutes-since-midnight in `timeZone` to the UTC
+ * instant it represents (DST-aware). Used for grid label math and for turning
+ * a user's local booking-form input into UTC -- the backend is the source of
+ * truth for actual validation either way.
  */
-export function kyivMinutesToUtcIso(dateIso: string, minutesSinceMidnight: number): string {
+export function zonedWallTimeToUtcIso(dateIso: string, minutesSinceMidnight: number, timeZone: string): string {
   const [year, month, day] = dateIso.split('-').map(Number);
   const hour = Math.floor(minutesSinceMidnight / 60);
   const minute = minutesSinceMidnight % 60;
   const naiveUtcMs = Date.UTC(year, month - 1, day, hour, minute);
-  const offsetMs = getTimeZoneOffsetMs(new Date(naiveUtcMs), OFFICE_TIMEZONE);
+  const offsetMs = getTimeZoneOffsetMs(new Date(naiveUtcMs), timeZone);
   return new Date(naiveUtcMs - offsetMs).toISOString();
+}
+
+/** Kyiv-specific convenience wrapper around {@link zonedWallTimeToUtcIso}. */
+export function kyivMinutesToUtcIso(dateIso: string, minutesSinceMidnight: number): string {
+  return zonedWallTimeToUtcIso(dateIso, minutesSinceMidnight, OFFICE_TIMEZONE);
 }
