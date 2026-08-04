@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -100,13 +101,52 @@ export class BookingsService {
       include: { user: { select: { id: true, name: true } } },
     });
 
-    return {
-      id: booking.id,
-      title: booking.title,
-      startAt: booking.startAt.toISOString(),
-      endAt: booking.endAt.toISOString(),
-      userId: booking.user.id,
-      userName: booking.user.name,
-    };
+    return toCreatedBooking(booking);
   }
+
+  async cancelBooking(
+    bookingId: string,
+    userId: string,
+  ): Promise<CreatedBooking> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { user: { select: { id: true, name: true } } },
+    });
+    if (!booking) {
+      throw new NotFoundException('Бронювання не знайдено');
+    }
+    if (booking.userId !== userId) {
+      throw new ForbiddenException(
+        'Ви можете скасувати лише власне бронювання',
+      );
+    }
+    if (booking.cancelledAt) {
+      throw new ConflictException('Бронювання вже скасовано');
+    }
+
+    const cancelled = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { cancelledAt: new Date() },
+      include: { user: { select: { id: true, name: true } } },
+    });
+
+    return toCreatedBooking(cancelled);
+  }
+}
+
+function toCreatedBooking(booking: {
+  id: string;
+  title: string;
+  startAt: Date;
+  endAt: Date;
+  user: { id: string; name: string };
+}): CreatedBooking {
+  return {
+    id: booking.id,
+    title: booking.title,
+    startAt: booking.startAt.toISOString(),
+    endAt: booking.endAt.toISOString(),
+    userId: booking.user.id,
+    userName: booking.user.name,
+  };
 }

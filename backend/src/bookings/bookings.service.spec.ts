@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,6 +9,7 @@ import { BookingsService } from './bookings.service';
 
 const ROOM = { id: 'room-1', name: 'Альфа', floor: 1, capacity: 4 };
 const USER = { id: 'user-1', name: 'Марія Шевченко' };
+const OTHER_USER = { id: 'user-2', name: 'Остап Гайдамака' };
 
 // A fixed "now" (Tuesday, Kyiv summer time) so booking-time math is deterministic
 // regardless of when the suite actually runs.
@@ -16,7 +18,12 @@ const FIXED_NOW = new Date('2026-08-04T08:00:00.000Z');
 function createMockPrisma() {
   return {
     room: { findUnique: jest.fn() },
-    booking: { findMany: jest.fn(), create: jest.fn() },
+    booking: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
   };
 }
 
@@ -193,5 +200,64 @@ describe('BookingsService', () => {
     expect(createdData?.title).toBe('Синхронізація команди');
     expect(createdData?.startAt).toBeInstanceOf(Date);
     expect(createdData?.endAt).toBeInstanceOf(Date);
+  });
+
+  describe('cancelBooking', () => {
+    const EXISTING_BOOKING = {
+      id: 'booking-1',
+      title: 'Синхронізація команди',
+      startAt: new Date('2026-08-05T07:00:00.000Z'),
+      endAt: new Date('2026-08-05T08:00:00.000Z'),
+      userId: USER.id,
+      cancelledAt: null as Date | null,
+      user: USER,
+    };
+
+    it('rejects an unknown booking', async () => {
+      prisma.booking.findUnique.mockResolvedValue(null);
+      await expect(
+        service.cancelBooking('missing-booking', USER.id),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it("rejects cancelling someone else's booking (CANCEL-2)", async () => {
+      prisma.booking.findUnique.mockResolvedValue(EXISTING_BOOKING);
+      await expect(
+        service.cancelBooking(EXISTING_BOOKING.id, OTHER_USER.id),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects cancelling an already-cancelled booking', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...EXISTING_BOOKING,
+        cancelledAt: new Date('2026-08-04T09:00:00.000Z'),
+      });
+      await expect(
+        service.cancelBooking(EXISTING_BOOKING.id, USER.id),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it("cancels the owner's own booking (CANCEL-1)", async () => {
+      interface UpdateArgs {
+        where: { id: string };
+        data: { cancelledAt: Date };
+      }
+      let updateArgs: UpdateArgs | undefined;
+      prisma.booking.findUnique.mockResolvedValue(EXISTING_BOOKING);
+      prisma.booking.update.mockImplementation((args: UpdateArgs) => {
+        updateArgs = args;
+        return Promise.resolve({
+          ...EXISTING_BOOKING,
+          cancelledAt: new Date('2026-08-04T08:00:00.000Z'),
+        });
+      });
+
+      const result = await service.cancelBooking(EXISTING_BOOKING.id, USER.id);
+
+      expect(result.id).toBe(EXISTING_BOOKING.id);
+      expect(updateArgs?.where).toEqual({ id: EXISTING_BOOKING.id });
+      expect(updateArgs?.data.cancelledAt).toBeInstanceOf(Date);
+    });
   });
 });
