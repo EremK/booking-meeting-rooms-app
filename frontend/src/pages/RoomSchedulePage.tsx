@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { cancelBooking } from '../api/bookings';
 import { ApiError } from '../api/client';
-import { getRoomSchedule, type WeeklySchedule } from '../api/rooms';
+import { getRoomSchedule, type ScheduleBooking, type WeeklySchedule } from '../api/rooms';
+import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { CreateBookingForm } from '../components/CreateBookingForm/CreateBookingForm';
 import { WeekGrid } from '../components/WeekGrid/WeekGrid';
+import { useAuth } from '../auth/AuthContext';
 import { addDays, getWeekDates } from '../lib/schedule-grid';
 import { getUserTimeZone, isSameTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
 import styles from './RoomSchedulePage.module.css';
 
 export function RoomSchedulePage() {
   const { roomId } = useParams<{ roomId: string }>();
+  const { user } = useAuth();
   const [referenceDate, setReferenceDate] = useState<string | undefined>(undefined);
   const [schedule, setSchedule] = useState<WeeklySchedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookingPendingCancellation, setBookingPendingCancellation] = useState<ScheduleBooking | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const userTimeZone = getUserTimeZone();
 
   const loadSchedule = useCallback(
@@ -50,6 +57,21 @@ export function RoomSchedulePage() {
 
   function goToNextWeek(): void {
     if (schedule) setReferenceDate(addDays(schedule.weekStartDate, 7));
+  }
+
+  async function handleConfirmCancel(): Promise<void> {
+    if (!bookingPendingCancellation) return;
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      await cancelBooking(bookingPendingCancellation.id);
+      setBookingPendingCancellation(null);
+      loadSchedule({ cancelled: false });
+    } catch (requestError) {
+      setCancelError(requestError instanceof ApiError ? requestError.message : 'Сталася невідома помилка.');
+    } finally {
+      setIsCancelling(false);
+    }
   }
 
   return (
@@ -90,9 +112,27 @@ export function RoomSchedulePage() {
             <CreateBookingForm roomId={roomId} userTimeZone={userTimeZone} onCreated={() => loadSchedule({ cancelled: false })} />
           )}
 
-          <WeekGrid weekDates={getWeekDates(schedule.weekStartDate)} bookings={schedule.bookings} userTimeZone={userTimeZone} />
+          <WeekGrid
+            weekDates={getWeekDates(schedule.weekStartDate)}
+            bookings={schedule.bookings}
+            userTimeZone={userTimeZone}
+            currentUserId={user?.id}
+            onCancelBooking={setBookingPendingCancellation}
+          />
         </>
       )}
+
+      <ConfirmDialog
+        open={bookingPendingCancellation !== null}
+        title="Скасувати бронювання?"
+        message={bookingPendingCancellation ? `«${bookingPendingCancellation.title}» більше не буде заброньовано.` : ''}
+        confirmLabel="Скасувати бронювання"
+        cancelLabel="Назад"
+        isConfirming={isCancelling}
+        onConfirm={() => void handleConfirmCancel()}
+        onCancel={() => setBookingPendingCancellation(null)}
+      />
+      {cancelError && <p className={styles.error}>{cancelError}</p>}
     </div>
   );
 }

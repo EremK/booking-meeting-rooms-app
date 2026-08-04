@@ -18,3 +18,7 @@ export interface CreatedBooking {
 export function createBooking(roomId: string, input: CreateBookingInput): Promise<CreatedBooking> {
   return api.post<CreatedBooking>(`/rooms/${roomId}/bookings`, input);
 }
+
+export function cancelBooking(bookingId: string): Promise<CreatedBooking> {
+  return api.post<CreatedBooking>(`/bookings/${bookingId}/cancel`);
+}

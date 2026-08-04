@@ -7,9 +7,11 @@ interface WeekGridProps {
   weekDates: string[];
   bookings: ScheduleBooking[];
   userTimeZone: string;
+  currentUserId?: string;
+  onCancelBooking?: (booking: ScheduleBooking) => void;
 }
 
-export function WeekGrid({ weekDates, bookings, userTimeZone }: WeekGridProps) {
+export function WeekGrid({ weekDates, bookings, userTimeZone, currentUserId, onCancelBooking }: WeekGridProps) {
   const slotOffsets = getSlotOffsetsMinutes();
 
   return (
@@ -38,6 +40,7 @@ export function WeekGrid({ weekDates, bookings, userTimeZone }: WeekGridProps) {
                 ))}
                 {dayBookings.map(({ booking, position }) => {
                   const rowSpan = position!.endRow - position!.startRow;
+                  const isOwn = booking.userId === currentUserId;
                   return (
                     <div
                       key={booking.id}
@@ -47,6 +50,19 @@ export function WeekGrid({ weekDates, bookings, userTimeZone }: WeekGridProps) {
                         height: `calc(${rowSpan} * var(--slot-height))`,
                       }}
                     >
+                      {isOwn && onCancelBooking && (
+                        <button
+                          type="button"
+                          className={styles.cancelButton}
+                          aria-label="Скасувати бронювання"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onCancelBooking(booking);
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
                       <span className={styles.bookingTime}>{formatTimeRangeInZone(booking.startAt, booking.endAt, userTimeZone)}</span>
                       <span className={styles.bookingTitle}>{booking.title}</span>
                       {/* A single 30-minute row can't fit a third line legibly. */}

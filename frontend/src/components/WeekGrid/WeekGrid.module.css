@@ -75,6 +75,26 @@
   box-sizing: border-box;
 }
 
+.cancelButton {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-accent-contrast);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
 .bookingTime {
   font-weight: 600;
   display: block;
