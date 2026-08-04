@@ -19,6 +19,7 @@ export interface ScheduleBooking {
 }
 
 export interface WeeklySchedule {
+  room: RoomSummary;
   weekStartDate: string;
   officeTimezone: string;
   bookings: ScheduleBooking[];
@@ -58,6 +59,12 @@ export class RoomsService {
     });
 
     return {
+      room: {
+        id: room.id,
+        name: room.name,
+        floor: room.floor,
+        capacity: room.capacity,
+      },
       weekStartDate,
       officeTimezone: OFFICE_TIMEZONE,
       bookings: bookings.map((booking) => ({
