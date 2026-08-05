@@ -23,8 +23,29 @@ function createMockPrisma() {
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
   };
+}
+
+interface FindManyArgs {
+  where: { userId: string; endAt: { gt?: Date; lte?: Date } };
+  orderBy: { startAt: 'asc' | 'desc' };
+  skip: number;
+  take: number;
+}
+
+/** Captures the args a mocked `findMany` was called with, while still resolving to `resolvedValue`. */
+function captureFindManyArgs(
+  mockFindMany: ReturnType<typeof createMockPrisma>['booking']['findMany'],
+  resolvedValue: unknown[],
+) {
+  const captured: { args?: FindManyArgs } = {};
+  mockFindMany.mockImplementation((args: FindManyArgs) => {
+    captured.args = args;
+    return Promise.resolve(resolvedValue);
+  });
+  return captured;
 }
 
 describe('BookingsService', () => {
@@ -258,6 +279,74 @@ describe('BookingsService', () => {
       expect(result.id).toBe(EXISTING_BOOKING.id);
       expect(updateArgs?.where).toEqual({ id: EXISTING_BOOKING.id });
       expect(updateArgs?.data.cancelledAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('listMyBookings', () => {
+    it('queries only bookings ending after now for "upcoming", sorted soonest-first', async () => {
+      const captured = captureFindManyArgs(prisma.booking.findMany, []);
+      prisma.booking.count.mockResolvedValue(0);
+
+      await service.listMyBookings(USER.id, 'upcoming', 1, 10);
+
+      expect(captured.args?.where.userId).toBe(USER.id);
+      expect(captured.args?.where.endAt.gt).toBeInstanceOf(Date);
+      expect(captured.args?.where.endAt.lte).toBeUndefined();
+      expect(captured.args?.orderBy).toEqual({ startAt: 'asc' });
+    });
+
+    it('queries only bookings that already ended for "past", sorted most-recent-first', async () => {
+      const captured = captureFindManyArgs(prisma.booking.findMany, []);
+      prisma.booking.count.mockResolvedValue(0);
+
+      await service.listMyBookings(USER.id, 'past', 1, 10);
+
+      expect(captured.args?.where.endAt.lte).toBeInstanceOf(Date);
+      expect(captured.args?.where.endAt.gt).toBeUndefined();
+      expect(captured.args?.orderBy).toEqual({ startAt: 'desc' });
+    });
+
+    it('includes cancelled bookings, with cancelledAt populated', async () => {
+      prisma.booking.findMany.mockResolvedValue([
+        {
+          id: 'booking-3',
+          title: 'Скасована зустріч',
+          startAt: new Date('2026-08-10T07:00:00.000Z'),
+          endAt: new Date('2026-08-10T08:00:00.000Z'),
+          cancelledAt: new Date('2026-08-04T09:00:00.000Z'),
+          room: ROOM,
+        },
+      ]);
+      prisma.booking.count.mockResolvedValue(1);
+
+      const result = await service.listMyBookings(USER.id, 'upcoming', 1, 10);
+
+      expect(result.items[0].cancelledAt).toBe('2026-08-04T09:00:00.000Z');
+    });
+
+    it('paginates using page/pageSize and reports hasMore correctly', async () => {
+      const captured = captureFindManyArgs(prisma.booking.findMany, []);
+      prisma.booking.count.mockResolvedValue(25);
+
+      const result = await service.listMyBookings(USER.id, 'upcoming', 2, 10);
+
+      expect(captured.args?.skip).toBe(10);
+      expect(captured.args?.take).toBe(10);
+      expect(result).toMatchObject({
+        page: 2,
+        pageSize: 10,
+        totalCount: 25,
+        hasMore: true,
+      });
+    });
+
+    it('reports hasMore as false on the last page', async () => {
+      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.count.mockResolvedValue(15);
+
+      const result = await service.listMyBookings(USER.id, 'upcoming', 2, 10);
+
+      expect(result.hasMore).toBe(false);
     });
   });
 });

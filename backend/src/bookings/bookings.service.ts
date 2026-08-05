@@ -27,6 +27,23 @@ export interface CreatedBooking {
   userName: string;
 }
 
+export interface MyBooking {
+  id: string;
+  title: string;
+  startAt: string;
+  endAt: string;
+  cancelledAt: string | null;
+  room: { id: string; name: string };
+}
+
+export interface MyBookingsPage {
+  items: MyBooking[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  hasMore: boolean;
+}
+
 @Injectable()
 export class BookingsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -132,6 +149,65 @@ export class BookingsService {
 
     return toCreatedBooking(cancelled);
   }
+
+  /**
+   * A user's own bookings, including cancelled ones (shown with a badge in
+   * "Мої бронювання" -- unlike the room grid, which hides cancelled slots).
+   * "upcoming" vs "past" is based on `endAt`, so a booking currently in
+   * progress still counts as upcoming until it actually ends.
+   */
+  async listMyBookings(
+    userId: string,
+    section: 'upcoming' | 'past',
+    page: number,
+    pageSize: number,
+  ): Promise<MyBookingsPage> {
+    const now = new Date();
+    const where =
+      section === 'upcoming'
+        ? { userId, endAt: { gt: now } }
+        : { userId, endAt: { lte: now } };
+    const orderBy = {
+      startAt: section === 'upcoming' ? ('asc' as const) : ('desc' as const),
+    };
+
+    const [items, totalCount] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: { room: { select: { id: true, name: true } } },
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+
+    return {
+      items: items.map(toMyBooking),
+      page,
+      pageSize,
+      totalCount,
+      hasMore: page * pageSize < totalCount,
+    };
+  }
+}
+
+function toMyBooking(booking: {
+  id: string;
+  title: string;
+  startAt: Date;
+  endAt: Date;
+  cancelledAt: Date | null;
+  room: { id: string; name: string };
+}): MyBooking {
+  return {
+    id: booking.id,
+    title: booking.title,
+    startAt: booking.startAt.toISOString(),
+    endAt: booking.endAt.toISOString(),
+    cancelledAt: booking.cancelledAt ? booking.cancelledAt.toISOString() : null,
+    room: booking.room,
+  };
 }
 
 function toCreatedBooking(booking: {
