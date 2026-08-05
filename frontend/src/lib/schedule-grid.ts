@@ -29,22 +29,49 @@ export interface BookingPosition {
   endRow: number;
 }
 
+interface RowPosition {
+  dayIndex: number;
+  row: number;
+}
+
 /**
- * Where a booking lands on the grid, in office-time (Kyiv) terms: which day
- * column, and which half-hour row range. Bookings never cross midnight
- * (max 4h, always within 09:00-19:00 office hours), so this is unambiguous.
+ * Where a single instant lands on the grid, in office-time (Kyiv) terms:
+ * which day column, and which row (possibly fractional, possibly outside
+ * [0, SLOT_COUNT] if the instant falls outside 09:00-19:00). Null if the
+ * instant's Kyiv calendar date isn't one of the displayed week's columns.
  */
-export function getBookingPosition(booking: ScheduleBooking, weekDates: string[]): BookingPosition | null {
-  const start = getZonedDateParts(booking.startAt, OFFICE_TIMEZONE);
-  const end = getZonedDateParts(booking.endAt, OFFICE_TIMEZONE);
-  const dateIso = `${start.year.toString().padStart(4, '0')}-${start.month.toString().padStart(2, '0')}-${start.day.toString().padStart(2, '0')}`;
+export function getRowForInstant(isoUtc: string, weekDates: string[]): RowPosition | null {
+  const parts = getZonedDateParts(isoUtc, OFFICE_TIMEZONE);
+  const dateIso = `${parts.year.toString().padStart(4, '0')}-${parts.month.toString().padStart(2, '0')}-${parts.day.toString().padStart(2, '0')}`;
 
   const dayIndex = weekDates.indexOf(dateIso);
   if (dayIndex === -1) {
     return null;
   }
 
-  const startRow = ((start.hour - OFFICE_OPEN_HOUR) * 60 + start.minute) / SLOT_MINUTES;
-  const endRow = ((end.hour - OFFICE_OPEN_HOUR) * 60 + end.minute) / SLOT_MINUTES;
-  return { dayIndex, startRow, endRow };
+  const row = ((parts.hour - OFFICE_OPEN_HOUR) * 60 + parts.minute) / SLOT_MINUTES;
+  return { dayIndex, row };
+}
+
+/**
+ * Where a booking lands on the grid, in office-time (Kyiv) terms: which day
+ * column, and which half-hour row range. Bookings never cross midnight
+ * (max 4h, always within 09:00-19:00 office hours), so this is unambiguous.
+ */
+export function getBookingPosition(booking: ScheduleBooking, weekDates: string[]): BookingPosition | null {
+  const start = getRowForInstant(booking.startAt, weekDates);
+  const end = getRowForInstant(booking.endAt, weekDates);
+  if (!start || !end) {
+    return null;
+  }
+  return { dayIndex: start.dayIndex, startRow: start.row, endRow: end.row };
+}
+
+/** The current-time indicator's position, or null if "now" isn't visible on this week/within office hours. */
+export function getNowPosition(now: Date, weekDates: string[]): RowPosition | null {
+  const position = getRowForInstant(now.toISOString(), weekDates);
+  if (!position || position.row < 0 || position.row > SLOT_COUNT) {
+    return null;
+  }
+  return position;
 }

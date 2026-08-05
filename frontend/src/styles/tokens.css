@@ -8,6 +8,7 @@
   --color-accent: #2f6f5e;
   --color-accent-contrast: #ffffff;
   --color-accent-hover: #285e50;
+  --color-accent-bg: #eaf2ef;
   --color-danger: #b3261e;
   --color-danger-bg: #fbeceb;
   --color-focus-ring: #2f6f5e;
@@ -44,6 +45,7 @@
     --color-accent: #4f9c86;
     --color-accent-contrast: #0b1211;
     --color-accent-hover: #5cae97;
+    --color-accent-bg: #1c2b27;
     --color-danger: #e5837c;
     --color-danger-bg: #3a2220;
     --color-focus-ring: #4f9c86;
