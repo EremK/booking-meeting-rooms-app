@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 import { RequireAuth } from './auth/RequireAuth';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
+import { MyBookingsPage } from './pages/MyBookingsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { RoomSchedulePage } from './pages/RoomSchedulePage';
 
@@ -13,6 +14,7 @@ function App() {
       <Route element={<RequireAuth />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/rooms/:roomId" element={<RoomSchedulePage />} />
+        <Route path="/my-bookings" element={<MyBookingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

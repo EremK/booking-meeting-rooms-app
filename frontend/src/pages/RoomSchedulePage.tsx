@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { cancelBooking } from '../api/bookings';
 import { ApiError } from '../api/client';
 import { getRoomSchedule, type ScheduleBooking, type WeeklySchedule } from '../api/rooms';
@@ -14,7 +14,8 @@ import styles from './RoomSchedulePage.module.css';
 export function RoomSchedulePage() {
   const { roomId } = useParams<{ roomId: string }>();
   const { user } = useAuth();
-  const [referenceDate, setReferenceDate] = useState<string | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const referenceDate = searchParams.get('date') ?? undefined;
   const [schedule, setSchedule] = useState<WeeklySchedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +53,11 @@ export function RoomSchedulePage() {
   }, [loadSchedule]);
 
   function goToPreviousWeek(): void {
-    if (schedule) setReferenceDate(addDays(schedule.weekStartDate, -7));
+    if (schedule) setSearchParams({ date: addDays(schedule.weekStartDate, -7) });
   }
 
   function goToNextWeek(): void {
-    if (schedule) setReferenceDate(addDays(schedule.weekStartDate, 7));
+    if (schedule) setSearchParams({ date: addDays(schedule.weekStartDate, 7) });
   }
 
   async function handleConfirmCancel(): Promise<void> {

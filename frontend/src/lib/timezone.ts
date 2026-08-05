@@ -128,3 +128,13 @@ export function zonedWallTimeToUtcIso(dateIso: string, minutesSinceMidnight: num
 export function kyivMinutesToUtcIso(dateIso: string, minutesSinceMidnight: number): string {
   return zonedWallTimeToUtcIso(dateIso, minutesSinceMidnight, OFFICE_TIMEZONE);
 }
+
+/** A UTC instant's calendar date (YYYY-MM-DD) as observed in `timeZone`. */
+export function getDateInZone(isoUtc: string, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(isoUtc));
+}
+
+/** Human-readable date label ("3 серп. 2026 р.") for a UTC instant, in `timeZone`. */
+export function formatDateInZone(isoUtc: string, timeZone: string): string {
+  return new Intl.DateTimeFormat('uk-UA', { timeZone, day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(isoUtc));
+}

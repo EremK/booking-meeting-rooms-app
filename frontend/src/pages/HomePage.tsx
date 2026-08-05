@@ -30,9 +30,14 @@ export function HomePage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Вітаємо, {user?.name}</h1>
-        <button type="button" className={styles.logout} onClick={() => void logout()}>
-          Вийти
-        </button>
+        <div className={styles.headerActions}>
+          <Link to="/my-bookings" className={styles.myBookingsLink}>
+            Мої бронювання
+          </Link>
+          <button type="button" className={styles.logout} onClick={() => void logout()}>
+            Вийти
+          </button>
+        </div>
       </header>
 
       {error && <p className={styles.error}>{error}</p>}
