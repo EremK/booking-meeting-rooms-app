@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingsService } from './bookings.service';
 
@@ -178,6 +179,42 @@ describe('BookingsService', () => {
     });
 
     expect(result.id).toBe('booking-2');
+  });
+
+  it('translates a database-level exclusion-constraint rejection into the same conflict message (race-condition fallback)', async () => {
+    // The pre-check query found nothing (this is exactly the race: two
+    // requests both pass it before either commits), but the actual INSERT
+    // is rejected by the `bookings_no_overlap` EXCLUDE constraint.
+    const exclusionViolation = Object.create(
+      Prisma.PrismaClientKnownRequestError.prototype,
+    ) as Record<string, unknown>;
+    exclusionViolation.message = 'Database error';
+    exclusionViolation.code = 'P2039';
+    exclusionViolation.meta = {
+      driverAdapterError: { cause: { originalCode: '23P01' } },
+    };
+    prisma.booking.create.mockRejectedValue(exclusionViolation);
+
+    await expect(
+      service.createBooking(ROOM.id, USER.id, {
+        title: 'Синк',
+        startAt: '2026-08-05T07:00:00.000Z',
+        endAt: '2026-08-05T08:00:00.000Z',
+      }),
+    ).rejects.toThrow('Цей час уже заброньовано');
+  });
+
+  it('re-throws unrelated database errors from create as-is', async () => {
+    const unrelatedError = new Error('connection lost');
+    prisma.booking.create.mockRejectedValue(unrelatedError);
+
+    await expect(
+      service.createBooking(ROOM.id, USER.id, {
+        title: 'Синк',
+        startAt: '2026-08-05T07:00:00.000Z',
+        endAt: '2026-08-05T08:00:00.000Z',
+      }),
+    ).rejects.toThrow('connection lost');
   });
 
   it('creates a valid booking and returns the expected shape', async () => {

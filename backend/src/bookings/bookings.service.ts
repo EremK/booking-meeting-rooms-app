@@ -10,6 +10,7 @@ import {
   isOnHalfHourBoundary,
   isWithinOfficeHours,
 } from '../common/office-hours';
+import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { hasOverlap } from './interval-overlap';
@@ -17,6 +18,9 @@ import { hasOverlap } from './interval-overlap';
 const MIN_DURATION_MINUTES = 30;
 const MAX_DURATION_MINUTES = 4 * 60;
 const MS_PER_MINUTE = 60_000;
+const OVERLAP_MESSAGE = 'Цей час уже заброньовано';
+/** Postgres SQLSTATE for `exclusion_violation` -- stable across versions (SQL standard). */
+const POSTGRES_EXCLUSION_VIOLATION_CODE = '23P01';
 
 export interface CreatedBooking {
   id: string;
@@ -110,15 +114,27 @@ export class BookingsService {
         })),
       )
     ) {
-      throw new ConflictException('Цей час уже заброньовано');
+      throw new ConflictException(OVERLAP_MESSAGE);
     }
 
-    const booking = await this.prisma.booking.create({
-      data: { roomId, userId, title: dto.title, startAt, endAt },
-      include: { user: { select: { id: true, name: true } } },
-    });
-
-    return toCreatedBooking(booking);
+    // The check above is the fast path and handles the common case with one
+    // query. It is not atomic with the insert, though: two requests can both
+    // pass it before either commits. The `bookings_no_overlap` EXCLUDE
+    // constraint is the actual race-condition guard -- it rejects the second
+    // insert atomically at the database level, and we translate that
+    // rejection into the same clean, user-facing conflict message.
+    try {
+      const booking = await this.prisma.booking.create({
+        data: { roomId, userId, title: dto.title, startAt, endAt },
+        include: { user: { select: { id: true, name: true } } },
+      });
+      return toCreatedBooking(booking);
+    } catch (error) {
+      if (isOverlapExclusionViolation(error)) {
+        throw new ConflictException(OVERLAP_MESSAGE);
+      }
+      throw error;
+    }
   }
 
   async cancelBooking(
@@ -190,6 +206,23 @@ export class BookingsService {
       hasMore: page * pageSize < totalCount,
     };
   }
+}
+
+/**
+ * Whether `error` is the `bookings_no_overlap` EXCLUDE constraint rejecting
+ * an insert. Prisma's driver-adapter errors don't get one of its own P-codes
+ * for this, so the underlying Postgres SQLSTATE is nested in `error.meta`.
+ */
+function isOverlapExclusionViolation(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+    return false;
+  }
+  const meta = error.meta as
+    { driverAdapterError?: { cause?: { originalCode?: string } } } | undefined;
+  return (
+    meta?.driverAdapterError?.cause?.originalCode ===
+    POSTGRES_EXCLUSION_VIOLATION_CODE
+  );
 }
 
 function toMyBooking(booking: {
