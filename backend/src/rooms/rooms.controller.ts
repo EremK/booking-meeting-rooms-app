@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetScheduleQueryDto } from './dto/get-schedule-query.dto';
+import { ListRoomsQueryDto } from './dto/list-rooms-query.dto';
 import {
   RoomsService,
   type RoomSummary,
@@ -13,8 +14,8 @@ export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Get()
-  listRooms(): Promise<RoomSummary[]> {
-    return this.roomsService.listRooms();
+  listRooms(@Query() query: ListRoomsQueryDto): Promise<RoomSummary[]> {
+    return this.roomsService.listRooms(query.minCapacity);
   }
 
   @Get(':roomId/schedule')

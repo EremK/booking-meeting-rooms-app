@@ -29,8 +29,10 @@ export interface WeeklySchedule {
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  listRooms(): Promise<RoomSummary[]> {
+  /** Bonus: room filter by capacity (BONUS-7). `minCapacity` is inclusive. */
+  listRooms(minCapacity?: number): Promise<RoomSummary[]> {
     return this.prisma.room.findMany({
+      where: minCapacity ? { capacity: { gte: minCapacity } } : undefined,
       select: { id: true, name: true, floor: true, capacity: true },
       orderBy: [{ floor: 'asc' }, { name: 'asc' }],
     });
