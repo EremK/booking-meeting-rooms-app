@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { ApiError } from '../api/client';
 import { listRooms, type Room } from '../api/rooms';
 import { useAuth } from '../auth/AuthContext';
+import { EmailConfirmationBanner } from '../components/EmailConfirmationBanner/EmailConfirmationBanner';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
@@ -39,6 +40,8 @@ export function HomePage() {
           </button>
         </div>
       </header>
+
+      {user && !user.emailConfirmed && <EmailConfirmationBanner />}
 
       {error && <p className={styles.error}>{error}</p>}
       {!error && !rooms && <p role="status">Завантаження кімнат…</p>}

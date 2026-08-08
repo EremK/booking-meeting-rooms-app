@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../api/client';
 import { createBooking, createBookingSeries, type CreatedBooking } from '../../api/bookings';
+import { useAuth } from '../../auth/AuthContext';
 import { getTodayInZone, zonedWallTimeToUtcIso } from '../../lib/timezone';
 import styles from './CreateBookingForm.module.css';
 
@@ -21,6 +22,7 @@ function parseTimeToMinutes(time: string): number | null {
 }
 
 export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBookingFormProps) {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState(() => getTodayInZone(userTimeZone));
   const [startTime, setStartTime] = useState('');
@@ -78,6 +80,14 @@ export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBoo
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (user && !user.emailConfirmed) {
+    return (
+      <div className={styles.wrapper}>
+        <p className={styles.unconfirmedNotice}>Підтвердьте email, щоб бронювати переговорні.</p>
+      </div>
+    );
   }
 
   if (!isOpen) {

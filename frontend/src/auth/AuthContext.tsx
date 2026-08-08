@@ -5,6 +5,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  emailConfirmed: boolean;
 }
 
 interface AuthContextValue {
@@ -13,6 +14,8 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Re-fetches the current session's user (e.g. after confirming email in this same browser). */
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -54,7 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  return <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>{children}</AuthContext.Provider>;
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await api.get<User>('/auth/me');
+      setUser(currentUser);
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {
