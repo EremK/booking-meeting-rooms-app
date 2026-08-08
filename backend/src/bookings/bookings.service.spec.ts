@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingsService } from './bookings.service';
 
@@ -46,6 +47,14 @@ function createMockPrisma() {
   return prisma;
 }
 
+function createMockNotificationsService() {
+  return {
+    purgeUndeliveredNotificationsForCancellations: jest
+      .fn()
+      .mockResolvedValue(undefined),
+  };
+}
+
 interface FindManyArgs {
   where: { userId: string; endAt: { gt?: Date; lte?: Date } };
   orderBy: { startAt: 'asc' | 'desc' };
@@ -68,15 +77,20 @@ function captureFindManyArgs(
 
 describe('BookingsService', () => {
   let prisma: ReturnType<typeof createMockPrisma>;
+  let notificationsService: ReturnType<typeof createMockNotificationsService>;
   let service: BookingsService;
 
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(FIXED_NOW);
     prisma = createMockPrisma();
+    notificationsService = createMockNotificationsService();
     prisma.room.findUnique.mockResolvedValue(ROOM);
     prisma.user.findUnique.mockResolvedValue({ emailConfirmedAt: new Date() });
     prisma.booking.findMany.mockResolvedValue([]);
-    service = new BookingsService(prisma as unknown as PrismaService);
+    service = new BookingsService(
+      prisma as unknown as PrismaService,
+      notificationsService as unknown as NotificationsService,
+    );
   });
 
   afterEach(() => {
@@ -402,6 +416,7 @@ describe('BookingsService', () => {
     const EXISTING_BOOKING = {
       id: 'booking-1',
       title: 'Синхронізація команди',
+      roomId: ROOM.id,
       startAt: new Date('2026-08-05T07:00:00.000Z'),
       endAt: new Date('2026-08-05T08:00:00.000Z'),
       userId: USER.id,
@@ -454,6 +469,26 @@ describe('BookingsService', () => {
       expect(result.id).toBe(EXISTING_BOOKING.id);
       expect(updateArgs?.where).toEqual({ id: EXISTING_BOOKING.id });
       expect(updateArgs?.data.cancelledAt).toBeInstanceOf(Date);
+    });
+
+    it('purges any undelivered end-of-booking notification tied to the cancelled booking (BONUS-5)', async () => {
+      prisma.booking.findUnique.mockResolvedValue(EXISTING_BOOKING);
+      prisma.booking.update.mockResolvedValue({
+        ...EXISTING_BOOKING,
+        cancelledAt: new Date('2026-08-04T08:00:00.000Z'),
+      });
+
+      await service.cancelBooking(EXISTING_BOOKING.id, USER.id);
+
+      expect(
+        notificationsService.purgeUndeliveredNotificationsForCancellations,
+      ).toHaveBeenCalledWith([
+        {
+          id: EXISTING_BOOKING.id,
+          roomId: EXISTING_BOOKING.roomId,
+          startAt: EXISTING_BOOKING.startAt,
+        },
+      ]);
     });
   });
 
@@ -512,6 +547,36 @@ describe('BookingsService', () => {
           where: { seriesId: EXISTING_SERIES.id, cancelledAt: null },
         }),
       );
+    });
+
+    it('purges undelivered notifications for exactly the occurrences that were still active (BONUS-5)', async () => {
+      const activeOccurrences = [
+        {
+          id: 'occ-1',
+          roomId: ROOM.id,
+          startAt: new Date('2026-08-05T07:00:00.000Z'),
+        },
+        {
+          id: 'occ-2',
+          roomId: ROOM.id,
+          startAt: new Date('2026-08-12T07:00:00.000Z'),
+        },
+      ];
+      prisma.bookingSeries.findUnique.mockResolvedValue(EXISTING_SERIES);
+      prisma.bookingSeries.update.mockResolvedValue({
+        ...EXISTING_SERIES,
+        cancelledAt: new Date('2026-08-04T08:00:00.000Z'),
+      });
+      prisma.booking.findMany.mockResolvedValue(activeOccurrences);
+      prisma.booking.updateMany.mockResolvedValue({
+        count: activeOccurrences.length,
+      });
+
+      await service.cancelSeries(EXISTING_SERIES.id, USER.id);
+
+      expect(
+        notificationsService.purgeUndeliveredNotificationsForCancellations,
+      ).toHaveBeenCalledWith(activeOccurrences);
     });
   });
 

@@ -143,6 +143,7 @@ npm run test:e2e
 | `FRONTEND_ORIGIN` | Origin фронтенда, дозволений у CORS |
 | `JWT_SECRET` | Секрет для підпису сесійного JWT |
 | `JWT_EXPIRES_IN_SECONDS` | Термін дії сесії в секундах |
+| `NOTIFY_BEFORE_MINUTES` | За скільки хвилин до кінця бронювання надсилати сповіщення (за замовчуванням `10`) |
 
 **`frontend/.env`**
 

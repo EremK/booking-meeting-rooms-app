@@ -11,6 +11,7 @@ import {
   isWithinOfficeHours,
 } from '../common/office-hours';
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CreateBookingSeriesDto } from './dto/create-booking-series.dto';
@@ -68,7 +69,10 @@ export interface MyBookingsPage {
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createBooking(
     roomId: string,
@@ -218,6 +222,15 @@ export class BookingsService {
       data: { cancelledAt: new Date() },
       include: { user: { select: { id: true, name: true } } },
     });
+    await this.notificationsService.purgeUndeliveredNotificationsForCancellations(
+      [
+        {
+          id: cancelled.id,
+          roomId: cancelled.roomId,
+          startAt: cancelled.startAt,
+        },
+      ],
+    );
 
     return toCreatedBooking(cancelled);
   }
@@ -247,6 +260,11 @@ export class BookingsService {
       throw new ConflictException('Серію вже скасовано');
     }
 
+    const activeOccurrences = await this.prisma.booking.findMany({
+      where: { seriesId, cancelledAt: null },
+      select: { id: true, roomId: true, startAt: true },
+    });
+
     const cancelledAt = new Date();
     const [, { count }] = await this.prisma.$transaction([
       this.prisma.bookingSeries.update({
@@ -258,6 +276,9 @@ export class BookingsService {
         data: { cancelledAt },
       }),
     ]);
+    await this.notificationsService.purgeUndeliveredNotificationsForCancellations(
+      activeOccurrences,
+    );
 
     return { id: seriesId, cancelledOccurrenceCount: count };
   }
