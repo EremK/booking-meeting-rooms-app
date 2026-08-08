@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router';
+import { NotificationCenter } from '../components/NotificationCenter/NotificationCenter';
 import { useAuth } from './AuthContext';
 
 export function RequireAuth() {
@@ -10,5 +11,10 @@ export function RequireAuth() {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  return <Outlet />;
+  return (
+    <>
+      <NotificationCenter />
+      <Outlet />
+    </>
+  );
 }
