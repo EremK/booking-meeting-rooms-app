@@ -79,6 +79,7 @@ export class BookingsService {
     if (!room) {
       throw new NotFoundException('Кімнату не знайдено');
     }
+    await this.assertEmailConfirmed(userId);
 
     const startAt = new Date(dto.startAt);
     const endAt = new Date(dto.endAt);
@@ -123,6 +124,7 @@ export class BookingsService {
     if (!room) {
       throw new NotFoundException('Кімнату не знайдено');
     }
+    await this.assertEmailConfirmed(userId);
 
     const firstStartAt = new Date(dto.startAt);
     const firstEndAt = new Date(dto.endAt);
@@ -291,6 +293,23 @@ export class BookingsService {
       )
     ) {
       throw new ConflictException(OVERLAP_MESSAGE);
+    }
+  }
+
+  /**
+   * Bonus (BONUS-2): booking creation is blocked until the user's email is
+   * confirmed (dev-mode confirmation link, see `AuthService`). Only creation
+   * is gated -- viewing schedules, cancelling, and login all stay open.
+   */
+  private async assertEmailConfirmed(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { emailConfirmedAt: true },
+    });
+    if (!user?.emailConfirmedAt) {
+      throw new ForbiddenException(
+        'Підтвердьте email, щоб бронювати переговорні кімнати',
+      );
     }
   }
 

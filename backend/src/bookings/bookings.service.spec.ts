@@ -19,6 +19,7 @@ const FIXED_NOW = new Date('2026-08-04T08:00:00.000Z');
 function createMockPrisma() {
   const prisma = {
     room: { findUnique: jest.fn() },
+    user: { findUnique: jest.fn() },
     booking: {
       findMany: jest.fn(),
       create: jest.fn(),
@@ -73,6 +74,7 @@ describe('BookingsService', () => {
     jest.useFakeTimers().setSystemTime(FIXED_NOW);
     prisma = createMockPrisma();
     prisma.room.findUnique.mockResolvedValue(ROOM);
+    prisma.user.findUnique.mockResolvedValue({ emailConfirmedAt: new Date() });
     prisma.booking.findMany.mockResolvedValue([]);
     service = new BookingsService(prisma as unknown as PrismaService);
   });
@@ -90,6 +92,18 @@ describe('BookingsService', () => {
         endAt: '2026-08-05T08:00:00.000Z',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("rejects booking creation when the user's email isn't confirmed (BONUS-2)", async () => {
+    prisma.user.findUnique.mockResolvedValue({ emailConfirmedAt: null });
+    await expect(
+      service.createBooking(ROOM.id, USER.id, {
+        title: 'Синк',
+        startAt: '2026-08-05T07:00:00.000Z',
+        endAt: '2026-08-05T08:00:00.000Z',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.booking.create).not.toHaveBeenCalled();
   });
 
   it('rejects when end is not after start', async () => {
@@ -302,6 +316,14 @@ describe('BookingsService', () => {
       await expect(
         service.createBookingSeries('missing-room', USER.id, SERIES_DTO),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it("rejects series creation when the user's email isn't confirmed (BONUS-2)", async () => {
+      prisma.user.findUnique.mockResolvedValue({ emailConfirmedAt: null });
+      await expect(
+        service.createBookingSeries(ROOM.id, USER.id, SERIES_DTO),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.bookingSeries.create).not.toHaveBeenCalled();
     });
 
     it('rejects invalid timing on the first occurrence, same as a single booking', async () => {

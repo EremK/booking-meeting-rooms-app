@@ -54,6 +54,14 @@ describe('Booking race-condition protection (e2e)', () => {
       'set-cookie'
     ] as unknown as string[];
     sessionCookie = setCookieHeader[0].split(';')[0];
+
+    // BONUS-2 blocks booking creation until email confirmation; this test
+    // is about race-condition protection, not the confirmation flow, so
+    // confirm directly rather than fishing the token out of a log line.
+    await prisma.user.update({
+      where: { email: userEmail },
+      data: { emailConfirmedAt: new Date() },
+    });
   });
 
   afterAll(async () => {

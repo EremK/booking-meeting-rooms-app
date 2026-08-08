@@ -14,6 +14,7 @@ import type { Response } from 'express';
 import { AuthService, PublicUser } from './auth.service';
 import { SESSION_COOKIE_NAME } from './auth.constants';
 import { CurrentUserId } from './current-user-id.decorator';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -52,6 +53,23 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response): { success: true } {
     res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
+    return { success: true };
+  }
+
+  /** Bonus (BONUS-2): no auth guard -- the link is meant to work from a cold click, session or not. */
+  @Post('confirm-email')
+  @HttpCode(HttpStatus.OK)
+  confirmEmail(@Body() dto: ConfirmEmailDto): Promise<PublicUser> {
+    return this.authService.confirmEmail(dto.token);
+  }
+
+  @Post('resend-confirmation')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  async resendConfirmation(
+    @CurrentUserId() userId: string,
+  ): Promise<{ success: true }> {
+    await this.authService.resendConfirmation(userId);
     return { success: true };
   }
 
