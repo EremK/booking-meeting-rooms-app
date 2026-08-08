@@ -111,7 +111,7 @@ export class BookingsService {
   }
 
   /**
-   * Bonus: weekly recurring bookings (BONUS-3). Only the first occurrence's
+   * Bonus: weekly recurring bookings. Only the first occurrence's
    * timing is validated against the office-hours/boundary/duration rules --
    * every later occurrence is the same wall-clock time and duration 7*n days
    * later (see `buildWeeklyOccurrences`), so those rules hold structurally.
@@ -236,7 +236,7 @@ export class BookingsService {
   }
 
   /**
-   * Cancels an entire series (BONUS-3): the series row itself plus every one
+   * Cancels an entire series: the series row itself plus every one
    * of its occurrences that isn't already cancelled. Already-cancelled
    * occurrences are left untouched (their own `cancelledAt` stays the
    * original cancellation time), matching the soft-cancellation history model.
@@ -318,7 +318,7 @@ export class BookingsService {
   }
 
   /**
-   * Bonus (BONUS-2): booking creation is blocked until the user's email is
+   * Bonus: booking creation is blocked until the user's email is
    * confirmed (dev-mode confirmation link, see `AuthService`). Only creation
    * is gated -- viewing schedules, cancelling, and login all stay open.
    */

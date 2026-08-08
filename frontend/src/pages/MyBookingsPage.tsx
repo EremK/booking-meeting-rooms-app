@@ -76,18 +76,16 @@ export function MyBookingsPage() {
 
   return (
     <div className={styles.page}>
-      <Link to="/" className={styles.backLink}>
-        ← Кімнати
-      </Link>
-      <h1 className={styles.title}>Мої бронювання</h1>
-
-      <div className={styles.tabs}>
-        <button type="button" className={section === 'upcoming' ? styles.tabActive : styles.tab} onClick={() => switchSection('upcoming')}>
-          Майбутні
-        </button>
-        <button type="button" className={section === 'past' ? styles.tabActive : styles.tab} onClick={() => switchSection('past')}>
-          Минулі
-        </button>
+      <div className={styles.toolbar}>
+        <h1 className={styles.title}>Мої бронювання</h1>
+        <div className={styles.tabs}>
+          <button type="button" className={section === 'upcoming' ? styles.tabActive : styles.tab} onClick={() => switchSection('upcoming')}>
+            Майбутні
+          </button>
+          <button type="button" className={section === 'past' ? styles.tabActive : styles.tab} onClick={() => switchSection('past')}>
+            Минулі
+          </button>
+        </div>
       </div>
 
       {isLoading && !data && <p role="status">Завантаження…</p>}
@@ -106,8 +104,10 @@ export function MyBookingsPage() {
                 <span className={styles.time}>{formatTimeRangeInZone(booking.startAt, booking.endAt, userTimeZone)}</span>
                 <span className={styles.room}>{booking.room.name}</span>
                 <span className={styles.bookingTitle}>{booking.title}</span>
-                {booking.seriesId && <span className={styles.recurringBadge}>Серія</span>}
-                {booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
+                <span className={styles.badges}>
+                  {booking.seriesId && <span className={styles.recurringBadge}>Серія</span>}
+                  {booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
+                </span>
               </Link>
               {section === 'upcoming' && !booking.cancelledAt && (
                 <div className={styles.rowActions}>

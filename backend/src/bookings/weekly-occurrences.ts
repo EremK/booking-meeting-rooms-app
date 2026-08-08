@@ -7,7 +7,7 @@ export interface WeeklyOccurrence {
 }
 
 /**
- * Weekly occurrences of a recurring booking (BONUS-3), `occurrenceCount` weeks
+ * Weekly occurrences of a recurring booking, `occurrenceCount` weeks
  * apart at the same Kyiv wall-clock time as the first occurrence. Adding
  * calendar weeks in the Kyiv zone (rather than 7*24h in UTC) keeps the local
  * start/end hour stable across a DST transition that falls between occurrences.

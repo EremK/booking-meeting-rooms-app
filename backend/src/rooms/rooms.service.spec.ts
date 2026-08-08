@@ -17,7 +17,7 @@ describe('RoomsService', () => {
     service = new RoomsService(prisma as unknown as PrismaService);
   });
 
-  describe('listRooms (BONUS-7: capacity filter)', () => {
+  describe('listRooms (capacity filter)', () => {
     it('lists all rooms, ordered by floor then name, when no filter is given', async () => {
       await service.listRooms();
 

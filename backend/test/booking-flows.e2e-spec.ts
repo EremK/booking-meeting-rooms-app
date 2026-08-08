@@ -20,14 +20,13 @@ function bookingId(response: request.Response): string {
 }
 
 /**
- * BONUS-6: API integration tests against a real running app + database for
+ * API integration tests against a real running app + database for
  * the two flows the spec calls out explicitly -- booking creation and
- * cancellation -- plus the server-side validation failures around them
- * (BOOK-1..7, ERR-1/2, CANCEL-1/2). Complements the mocked-Prisma unit tests
- * in `BookingsService.spec.ts`, which exercise the same rules without a
- * real HTTP/DB round trip.
+ * cancellation -- plus the server-side validation failures around them.
+ * Complements the mocked-Prisma unit tests in `BookingsService.spec.ts`,
+ * which exercise the same rules without a real HTTP/DB round trip.
  */
-describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () => {
+describe('Booking API: creation, cancellation, validation (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
   let roomId: string;
@@ -111,7 +110,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
       expect(persisted?.cancelledAt).toBeNull();
     });
 
-    it('rejects an empty title (ERR-1)', async () => {
+    it('rejects an empty title', async () => {
       const response = await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
         .set('Cookie', ownerCookie)
@@ -175,7 +174,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
         .expect(400);
     });
 
-    it('rejects a booking outside office hours (BOOK-5, ERR-2)', async () => {
+    it('rejects a booking outside office hours', async () => {
       // 20:00-21:00 Kyiv -- after the 19:00 close.
       await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
@@ -188,7 +187,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
         .expect(400);
     });
 
-    it('rejects a booking in the past (ERR-2)', async () => {
+    it('rejects a booking in the past', async () => {
       const start = new Date(Date.now() - 60 * 60 * 1000);
       const end = new Date(Date.now() - 30 * 60 * 1000);
       await request(app.getHttpServer())
@@ -214,7 +213,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
         .expect(400);
     });
 
-    it('rejects a booking that overlaps an existing one (BOOK-6, ERR-1)', async () => {
+    it('rejects a booking that overlaps an existing one', async () => {
       await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
         .set('Cookie', ownerCookie)
@@ -240,7 +239,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
       );
     });
 
-    it('accepts a booking merely adjacent to an existing one (BOOK-7)', async () => {
+    it('accepts a booking merely adjacent to an existing one', async () => {
       // Continues from the previous test's 07:00-08:00 booking in the same room.
       await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
@@ -278,7 +277,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
   });
 
   describe('POST /bookings/:id/cancel', () => {
-    it('lets the owner cancel their own booking and frees the slot (CANCEL-1)', async () => {
+    it('lets the owner cancel their own booking and frees the slot', async () => {
       const created = await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
         .set('Cookie', ownerCookie)
@@ -300,7 +299,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
       });
       expect(persisted?.cancelledAt).not.toBeNull();
 
-      // The slot is free again for anyone (UI-6 / cancellation model).
+      // The slot is free again for anyone.
       await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
         .set('Cookie', otherCookie)
@@ -312,7 +311,7 @@ describe('Booking API: creation, cancellation, validation (e2e, BONUS-6)', () =>
         .expect(201);
     });
 
-    it("rejects cancelling someone else's booking, leaving it active (CANCEL-2)", async () => {
+    it("rejects cancelling someone else's booking, leaving it active", async () => {
       const created = await request(app.getHttpServer())
         .post(`/rooms/${roomId}/bookings`)
         .set('Cookie', ownerCookie)

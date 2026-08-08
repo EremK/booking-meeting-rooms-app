@@ -7,7 +7,7 @@ import { configureApp } from '../src/bootstrap';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 /**
- * BONUS-4: two users clicking "book" on the same slot at the same time must
+ * Two users clicking "book" on the same slot at the same time must
  * result in exactly one booking in the database. The applicationlevel
  * pre-check in BookingsService is not atomic with the insert (it's a
  * separate query), so this specifically exercises the real race window by
@@ -48,9 +48,9 @@ describe('Booking race-condition protection (e2e)', () => {
     ] as unknown as string[];
     sessionCookie = setCookieHeader[0].split(';')[0];
 
-    // BONUS-2 blocks booking creation until email confirmation; this test
-    // is about race-condition protection, not the confirmation flow, so
-    // confirm directly rather than fishing the token out of a log line.
+    // Email confirmation blocks booking creation; this test is about
+    // race-condition protection, not the confirmation flow, so confirm
+    // directly rather than fishing the token out of a log line.
     await prisma.user.update({
       where: { email: userEmail },
       data: { emailConfirmedAt: new Date() },

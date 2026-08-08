@@ -41,7 +41,7 @@ type BookingWithRoom = {
 };
 
 /**
- * Bonus: end-of-booking notifications (BONUS-5). A scheduled scan finds
+ * Bonus: end-of-booking notifications. A scheduled scan finds
  * bookings entering their "N minutes before end" window whose room's next
  * slot is already booked, persists exactly one `Notification` row per
  * booking (the DB's `bookingId` unique constraint is the actual guarantee),
@@ -156,7 +156,7 @@ export class NotificationsService {
   }
 
   /**
-   * Bonus (BONUS-5): cancelling either the notified booking or the adjacent
+   * Bonus: cancelling either the notified booking or the adjacent
    * one that made its slot "next-slot-booked" must stop an undelivered
    * notification from arriving. Delivered notifications are left as history.
    * Batched (rather than one call per booking) so series cancellation --

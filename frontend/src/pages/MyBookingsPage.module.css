@@ -1,44 +1,49 @@
 .page {
-  padding: var(--space-6);
-  max-width: 800px;
+  padding: var(--space-5) var(--space-6);
+  max-width: var(--content-width-lg);
   margin: 0 auto;
 }
 
-.backLink {
-  display: inline-block;
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
   margin-bottom: var(--space-4);
-  color: var(--color-text-muted);
-  font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .title {
-  margin: 0 0 var(--space-5);
-  font-size: 20px;
+  margin: 0;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .tabs {
   display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-1);
 }
 
 .tab,
 .tabActive {
-  padding: var(--space-2) var(--space-4);
-  border: none;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   background: transparent;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   color: var(--color-text-muted);
-  border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+  color: var(--color-text);
 }
 
 .tabActive {
   color: var(--color-text);
   font-weight: 600;
-  border-bottom-color: var(--color-accent);
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
 }
 
 .list {
@@ -47,98 +52,111 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
 }
 
 .row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:hover {
   background: var(--color-surface);
-  overflow: hidden;
 }
 
 .rowLink {
   flex: 1;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 118px 108px 140px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-2);
   color: var(--color-text);
   text-decoration: none;
   min-width: 0;
-}
-
-.rowLink:hover {
-  background: var(--color-surface-alt);
+  font-size: 13px;
 }
 
 .date {
-  font-size: 13px;
   color: var(--color-text-muted);
-  min-width: 100px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .time {
-  font-size: 13px;
   font-weight: 600;
-  min-width: 100px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .room {
-  font-size: 13px;
   color: var(--color-text-muted);
-}
-
-.bookingTitle {
-  flex: 1;
-  font-size: 14px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.bookingTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: end;
+}
+
 .cancelledBadge {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--color-danger);
   background: var(--color-danger-bg);
-  padding: 2px 8px;
+  border: 1px solid var(--color-danger-border);
+  padding: 2px 7px;
   border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .recurringBadge {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--color-text-muted);
   background: var(--color-surface-alt);
-  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  padding: 2px 7px;
   border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .rowActions {
   flex-shrink: 0;
   display: flex;
   gap: var(--space-2);
-  margin-right: var(--space-4);
+  padding-right: var(--space-2);
 }
 
 .cancelButton {
   flex-shrink: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-danger);
-  font-size: 13px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .cancelButton:hover {
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
   background: var(--color-danger-bg);
 }
 
@@ -169,10 +187,22 @@
 .error {
   color: var(--color-danger);
   background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
   border-radius: var(--radius-sm);
   padding: var(--space-3);
 }
 
 .empty {
   color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .rowLink {
+    grid-template-columns: 100px 96px minmax(0, 1fr) auto;
+    gap: var(--space-2);
+  }
+
+  .room {
+    display: none;
+  }
 }

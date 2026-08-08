@@ -56,7 +56,7 @@ export class AuthController {
     return { success: true };
   }
 
-  /** Bonus (BONUS-2): no auth guard -- the link is meant to work from a cold click, session or not. */
+  /** no auth guard -- the link is meant to work from a cold click, session or not. */
   @Post('confirm-email')
   @HttpCode(HttpStatus.OK)
   confirmEmail(@Body() dto: ConfirmEmailDto): Promise<PublicUser> {

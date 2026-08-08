@@ -66,7 +66,7 @@ function buildDemoBookings(): DemoBooking[] {
     },
     {
       // Back-to-back with the booking above, different author -- exercises both
-      // the adjacency rule (BOOK-7) and "own vs. others'" grid styling (UI-5).
+      // the adjacency rule and "own vs. others'" grid styling.
       roomName: 'Альфа',
       userEmail: 'ostap.haidamaka@example.com',
       title: 'Співбесіда з кандидатом',

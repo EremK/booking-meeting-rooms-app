@@ -108,7 +108,7 @@ describe('BookingsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it("rejects booking creation when the user's email isn't confirmed (BONUS-2)", async () => {
+  it("rejects booking creation when the user's email isn't confirmed", async () => {
     prisma.user.findUnique.mockResolvedValue({ emailConfirmedAt: null });
     await expect(
       service.createBooking(ROOM.id, USER.id, {
@@ -201,7 +201,7 @@ describe('BookingsService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('accepts a booking that is merely adjacent to an existing one (BOOK-7)', async () => {
+  it('accepts a booking that is merely adjacent to an existing one', async () => {
     prisma.booking.findMany.mockResolvedValue([
       {
         startAt: new Date('2026-08-05T07:00:00.000Z'),
@@ -304,7 +304,7 @@ describe('BookingsService', () => {
     expect(createdData?.endAt).toBeInstanceOf(Date);
   });
 
-  describe('createBookingSeries (BONUS-3)', () => {
+  describe('createBookingSeries', () => {
     const SERIES_DTO = {
       title: 'Щотижневий синк',
       startAt: '2026-08-05T07:00:00.000Z', // Wed 10:00 Kyiv
@@ -332,7 +332,7 @@ describe('BookingsService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it("rejects series creation when the user's email isn't confirmed (BONUS-2)", async () => {
+    it("rejects series creation when the user's email isn't confirmed", async () => {
       prisma.user.findUnique.mockResolvedValue({ emailConfirmedAt: null });
       await expect(
         service.createBookingSeries(ROOM.id, USER.id, SERIES_DTO),
@@ -431,7 +431,7 @@ describe('BookingsService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it("rejects cancelling someone else's booking (CANCEL-2)", async () => {
+    it("rejects cancelling someone else's booking", async () => {
       prisma.booking.findUnique.mockResolvedValue(EXISTING_BOOKING);
       await expect(
         service.cancelBooking(EXISTING_BOOKING.id, OTHER_USER.id),
@@ -449,7 +449,7 @@ describe('BookingsService', () => {
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
-    it("cancels the owner's own booking (CANCEL-1)", async () => {
+    it("cancels the owner's own booking", async () => {
       interface UpdateArgs {
         where: { id: string };
         data: { cancelledAt: Date };
@@ -471,7 +471,7 @@ describe('BookingsService', () => {
       expect(updateArgs?.data.cancelledAt).toBeInstanceOf(Date);
     });
 
-    it('purges any undelivered end-of-booking notification tied to the cancelled booking (BONUS-5)', async () => {
+    it('purges any undelivered end-of-booking notification tied to the cancelled booking', async () => {
       prisma.booking.findUnique.mockResolvedValue(EXISTING_BOOKING);
       prisma.booking.update.mockResolvedValue({
         ...EXISTING_BOOKING,
@@ -492,7 +492,7 @@ describe('BookingsService', () => {
     });
   });
 
-  describe('cancelSeries (BONUS-3)', () => {
+  describe('cancelSeries', () => {
     const EXISTING_SERIES = {
       id: 'series-1',
       title: 'Щотижневий синк',
@@ -549,7 +549,7 @@ describe('BookingsService', () => {
       );
     });
 
-    it('purges undelivered notifications for exactly the occurrences that were still active (BONUS-5)', async () => {
+    it('purges undelivered notifications for exactly the occurrences that were still active', async () => {
       const activeOccurrences = [
         {
           id: 'occ-1',

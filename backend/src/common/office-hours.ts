@@ -71,7 +71,7 @@ export function getKyivDayBounds(instant: Date): KyivDayBounds {
   };
 }
 
-/** Whether `instant` falls exactly on a 30-minute boundary in Kyiv time (BOOK-3). */
+/** Whether `instant` falls exactly on a 30-minute boundary in Kyiv time. */
 export function isOnHalfHourBoundary(instant: Date): boolean {
   const dateTime = DateTime.fromJSDate(instant, { zone: OFFICE_TIMEZONE });
   return (
@@ -83,8 +83,8 @@ export function isOnHalfHourBoundary(instant: Date): boolean {
 
 /**
  * Whether [start, end) falls entirely within a single Kyiv office day and
- * within the 09:00-19:00 office-hours window (BOOK-5). Does not check
- * duration or slot alignment -- those are separate rules.
+ * within the 09:00-19:00 office-hours window. Does not check duration or
+ * slot alignment -- those are separate rules.
  */
 export function isWithinOfficeHours(start: Date, end: Date): boolean {
   const startInKyiv = DateTime.fromJSDate(start, { zone: OFFICE_TIMEZONE });

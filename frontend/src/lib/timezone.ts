@@ -45,6 +45,17 @@ export function formatDayHeader(dateIso: string): string {
   return new Intl.DateTimeFormat('uk-UA', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(date);
 }
 
+/** Short weekday abbreviation ("пн", "вт", ...) for a plain calendar date. */
+export function formatWeekdayShort(dateIso: string): string {
+  const date = new Date(`${dateIso}T00:00:00Z`);
+  return new Intl.DateTimeFormat('uk-UA', { timeZone: 'UTC', weekday: 'short' }).format(date);
+}
+
+/** Day-of-month number for a plain calendar date (YYYY-MM-DD), for the compact day-header badge. */
+export function getDayNumber(dateIso: string): string {
+  return String(Number(dateIso.slice(8, 10)));
+}
+
 interface ZonedDateParts {
   year: number;
   month: number;

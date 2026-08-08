@@ -39,7 +39,10 @@ export function RegisterPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Реєстрація</h1>
+        <div className={styles.cardHeader}>
+          <img src="/white-calendar-mascot.png" alt="" width={56} height={56} className={styles.mascot} />
+          <h1 className={styles.title}>Реєстрація в Переговорні UA</h1>
+        </div>
         <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
           {generalError && <p className={styles.formError}>{generalError}</p>}
 

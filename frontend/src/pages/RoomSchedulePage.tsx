@@ -8,7 +8,7 @@ import { CreateBookingForm } from '../components/CreateBookingForm/CreateBooking
 import { WeekGrid } from '../components/WeekGrid/WeekGrid';
 import { useAuth } from '../auth/AuthContext';
 import { addDays, getWeekDates } from '../lib/schedule-grid';
-import { getUserTimeZone, isSameTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
+import { getTodayInZone, getUserTimeZone, isSameTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
 import styles from './RoomSchedulePage.module.css';
 
 export function RoomSchedulePage() {
@@ -60,6 +60,10 @@ export function RoomSchedulePage() {
     if (schedule) setSearchParams({ date: addDays(schedule.weekStartDate, 7) });
   }
 
+  function goToToday(): void {
+    setSearchParams({ date: getTodayInZone(OFFICE_TIMEZONE) });
+  }
+
   async function handleConfirmCancel(): Promise<void> {
     if (!bookingPendingCancellation) return;
     setIsCancelling(true);
@@ -86,32 +90,36 @@ export function RoomSchedulePage() {
 
       {schedule && (
         <>
-          <header className={styles.header}>
-            <div>
+          <div className={styles.toolbar}>
+            <div className={styles.roomInfo}>
               <h1 className={styles.title}>{schedule.room.name}</h1>
-              <p className={styles.meta}>
+              <span className={styles.meta}>
                 Поверх {schedule.room.floor} · До {schedule.room.capacity} осіб
-              </p>
+              </span>
             </div>
-            <div className={styles.nav}>
-              <button type="button" onClick={goToPreviousWeek} disabled={isLoading}>
-                ← Попередній тиждень
-              </button>
-              <button type="button" onClick={goToNextWeek} disabled={isLoading}>
-                Наступний тиждень →
-              </button>
+
+            <div className={styles.toolbarActions}>
+              {!isSameTimeZone(userTimeZone, OFFICE_TIMEZONE) && (
+                <span className={styles.tzNote} title={`Робочі години офісу: 09:00–19:00 за Києвом (${OFFICE_TIMEZONE})`}>
+                  Ваш пояс: {userTimeZone}
+                </span>
+              )}
+              <div className={styles.nav}>
+                <button type="button" onClick={goToToday} disabled={isLoading}>
+                  Сьогодні
+                </button>
+                <button type="button" onClick={goToPreviousWeek} disabled={isLoading} aria-label="Попередній тиждень">
+                  ←
+                </button>
+                <button type="button" onClick={goToNextWeek} disabled={isLoading} aria-label="Наступний тиждень">
+                  →
+                </button>
+              </div>
+              {roomId && (
+                <CreateBookingForm roomId={roomId} userTimeZone={userTimeZone} onCreated={() => loadSchedule({ cancelled: false })} />
+              )}
             </div>
-          </header>
-
-          {!isSameTimeZone(userTimeZone, OFFICE_TIMEZONE) && (
-            <p className={styles.tzNote}>
-              Ваш часовий пояс: {userTimeZone}. Робочі години офісу: 09:00–19:00 за Києвом ({OFFICE_TIMEZONE}).
-            </p>
-          )}
-
-          {roomId && (
-            <CreateBookingForm roomId={roomId} userTimeZone={userTimeZone} onCreated={() => loadSchedule({ cancelled: false })} />
-          )}
+          </div>
 
           <WeekGrid
             weekDates={getWeekDates(schedule.weekStartDate)}

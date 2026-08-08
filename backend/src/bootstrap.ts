@@ -6,7 +6,7 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 
-/** Grouped by field so the frontend can show each message next to its input (UI-3). */
+/** Grouped by field so the frontend can show each message next to its input. */
 function toFieldErrors(errors: ValidationError[]): Record<string, string[]> {
   const fieldErrors: Record<string, string[]> = {};
   for (const error of errors) {

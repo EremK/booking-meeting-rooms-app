@@ -33,7 +33,7 @@ describe('buildWeeklyOccurrences', () => {
     expect(occurrences[0].endAt).toEqual(firstEndAt);
   });
 
-  it('preserves the Kyiv wall-clock time across a DST transition (BOOK-3/TZ)', () => {
+  it('preserves the Kyiv wall-clock time across a DST transition', () => {
     // 2026-03-20 10:00 Kyiv (EET, UTC+2) -- the series crosses the 2026-03-29
     // spring-forward into EEST (UTC+3), so the UTC instant must jump an hour
     // while the Kyiv wall time stays 10:00-11:00.

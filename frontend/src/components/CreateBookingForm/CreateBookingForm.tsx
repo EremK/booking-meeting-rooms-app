@@ -105,54 +105,56 @@ export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBoo
       <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
         {generalError && <p className={styles.formError}>{generalError}</p>}
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="booking-date">
-            Дата
-          </label>
-          <input
-            id="booking-date"
-            type="date"
-            required
-            value={date}
-            disabled={isSubmitting}
-            onChange={(event) => setDate(event.target.value)}
-            className={styles.input}
-          />
+        <div className={styles.dateTimeRow}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="booking-date">
+              Дата
+            </label>
+            <input
+              id="booking-date"
+              type="date"
+              required
+              value={date}
+              disabled={isSubmitting}
+              onChange={(event) => setDate(event.target.value)}
+              className={styles.input}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="booking-start">
+              Початок
+            </label>
+            <input
+              id="booking-start"
+              type="time"
+              step={1800}
+              required
+              value={startTime}
+              disabled={isSubmitting}
+              onChange={(event) => setStartTime(event.target.value)}
+              className={styles.input}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="booking-end">
+              Кінець
+            </label>
+            <input
+              id="booking-end"
+              type="time"
+              step={1800}
+              required
+              value={endTime}
+              disabled={isSubmitting}
+              onChange={(event) => setEndTime(event.target.value)}
+              className={styles.input}
+            />
+          </div>
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="booking-start">
-            Початок
-          </label>
-          <input
-            id="booking-start"
-            type="time"
-            step={1800}
-            required
-            value={startTime}
-            disabled={isSubmitting}
-            onChange={(event) => setStartTime(event.target.value)}
-            className={styles.input}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="booking-end">
-            Кінець
-          </label>
-          <input
-            id="booking-end"
-            type="time"
-            step={1800}
-            required
-            value={endTime}
-            disabled={isSubmitting}
-            onChange={(event) => setEndTime(event.target.value)}
-            className={styles.input}
-          />
-        </div>
-
-        <div className={`${styles.field} ${styles.titleField}`}>
           <label className={styles.label} htmlFor="booking-title">
             Назва
           </label>

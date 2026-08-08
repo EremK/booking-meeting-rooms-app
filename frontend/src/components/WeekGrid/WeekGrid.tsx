@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import type { ScheduleBooking } from '../../api/rooms';
 import { getBookingPosition, getNowPosition, getSlotOffsetsMinutes, OFFICE_OPEN_HOUR } from '../../lib/schedule-grid';
-import { formatDayHeader, formatTimeInZone, formatTimeRangeInZone, getTodayInZone, kyivMinutesToUtcIso, OFFICE_TIMEZONE } from '../../lib/timezone';
+import {
+  formatDayHeader,
+  formatTimeInZone,
+  formatTimeRangeInZone,
+  formatWeekdayShort,
+  getDayNumber,
+  getTodayInZone,
+  kyivMinutesToUtcIso,
+  OFFICE_TIMEZONE,
+} from '../../lib/timezone';
 import styles from './WeekGrid.module.css';
 
 const NOW_REFRESH_INTERVAL_MS = 60_000;
@@ -46,7 +55,10 @@ export function WeekGrid({ weekDates, bookings, userTimeZone, currentUserId, onC
 
           return (
             <div key={date} className={`${styles.dayColumn} ${isToday ? styles.todayColumn : ''}`}>
-              <div className={styles.dayHeader}>{formatDayHeader(date)}</div>
+              <div className={styles.dayHeader} aria-label={formatDayHeader(date)}>
+                <span className={styles.weekday}>{formatWeekdayShort(date)}</span>
+                <span className={isToday ? styles.dayNumberToday : styles.dayNumber}>{getDayNumber(date)}</span>
+              </div>
               <div className={styles.dayBody}>
                 {slotOffsets.map((offsetMinutes) => (
                   <div key={offsetMinutes} className={styles.slotCell} />

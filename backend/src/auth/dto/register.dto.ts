@@ -8,7 +8,7 @@ export class RegisterDto {
   name!: string;
 
   // Normalized before validation, so a padded/mixed-case address is accepted
-  // rather than rejected by @IsEmail (AUTH-4).
+  // rather than rejected by @IsEmail.
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? normalizeEmail(value) : value,
   )

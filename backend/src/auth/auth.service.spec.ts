@@ -83,7 +83,7 @@ describe('AuthService', () => {
       logSpy.mockRestore();
     });
 
-    it('issues an unconfirmed account with a single-use confirmation token, printed to the server log (BONUS-2)', async () => {
+    it('issues an unconfirmed account with a single-use confirmation token, printed to the server log', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
       let createdData: Omit<MockUser, 'id'> | undefined;
       prisma.user.create.mockImplementation(
@@ -186,7 +186,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('logs in successfully even when the email is not yet confirmed (BONUS-2: only booking is gated, not login)', async () => {
+    it('logs in successfully even when the email is not yet confirmed (only booking is gated, not login)', async () => {
       const passwordHash = await bcrypt.hash('password123', 10);
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
@@ -205,7 +205,7 @@ describe('AuthService', () => {
     });
   });
 
-  describe('confirmEmail (BONUS-2)', () => {
+  describe('confirmEmail', () => {
     const UNCONFIRMED_USER = {
       id: 'user-1',
       name: 'Марія Шевченко',
@@ -261,7 +261,7 @@ describe('AuthService', () => {
     });
   });
 
-  describe('resendConfirmation (BONUS-2)', () => {
+  describe('resendConfirmation', () => {
     it('rejects an already-confirmed account', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',

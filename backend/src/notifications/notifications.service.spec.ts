@@ -28,7 +28,7 @@ function createMockPrisma() {
   };
 }
 
-describe('NotificationsService (BONUS-5)', () => {
+describe('NotificationsService', () => {
   let prisma: ReturnType<typeof createMockPrisma>;
   let service: NotificationsService;
 

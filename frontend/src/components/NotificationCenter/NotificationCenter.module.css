@@ -1,12 +1,11 @@
 .wrapper {
   position: relative;
-  z-index: 100;
+  display: inline-flex;
 }
 
 .bellArea {
-  position: fixed;
-  top: var(--space-4);
-  right: var(--space-4);
+  position: relative;
+  display: inline-flex;
 }
 
 .bellButton {
@@ -14,33 +13,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--color-border);
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
   border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: transparent;
+  color: var(--color-text-muted);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
 }
 
 .bellButton:hover {
   background: var(--color-surface-alt);
+  color: var(--color-text);
 }
 
 .badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 16px;
-  height: 16px;
+  top: -2px;
+  right: -2px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 3px;
   border-radius: 8px;
-  background: var(--color-danger);
+  background: var(--color-accent);
   color: var(--color-accent-contrast);
   font-size: 10px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 15px;
   text-align: center;
 }
 
@@ -54,8 +53,9 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   padding: var(--space-3);
+  z-index: 200;
 }
 
 .dropdownTitle {
@@ -108,13 +108,14 @@
   flex-direction: column;
   gap: var(--space-2);
   width: min(300px, 90vw);
+  z-index: 300;
 }
 
 .toast {
-  border: 1px solid var(--color-accent);
+  border: 1px solid var(--color-accent-border);
   border-radius: var(--radius-md);
   background: var(--color-accent-bg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   padding: var(--space-3);
 }
 
