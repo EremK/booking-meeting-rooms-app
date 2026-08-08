@@ -197,12 +197,45 @@
 }
 
 @media (max-width: 640px) {
+  .page {
+    padding: var(--space-4);
+  }
+
   .rowLink {
-    grid-template-columns: 100px 96px minmax(0, 1fr) auto;
+    grid-template-columns: 100px 96px minmax(0, 1fr);
     gap: var(--space-2);
   }
 
   .room {
     display: none;
+  }
+
+  /*
+   * The badges column is sized to its own content (auto) and its badges
+   * don't wrap (white-space: nowrap), so on narrow screens a row with both
+   * "Серія" and "Скасовано" doesn't fit next to the fixed date/time columns
+   * and overflows the viewport. Drop it to its own full-width row instead.
+   */
+  .badges {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: var(--space-1);
+  }
+}
+
+/*
+ * Below ~420px (e.g. 320px "Mobile S" devices) the fixed date/time columns
+ * plus the cancel button(s) no longer fit on one line and start overlapping.
+ * Drop the actions onto their own row instead of fighting for width.
+ */
+@media (max-width: 420px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rowActions {
+    padding: 0 var(--space-2) var(--space-3);
+    justify-content: flex-end;
   }
 }

@@ -11,8 +11,11 @@
   background: var(--color-surface);
 }
 
-/* Same max-width/centering as the page content, so the header aligns with it. */
+/* Same max-width/centering as the page content, so the header aligns with it.
+   Positioned so the notifications dropdown (a descendant) can anchor to the
+   full-width header row instead of its own narrow trigger button. */
 .navInner {
+  position: relative;
   height: 100%;
   max-width: var(--content-width-lg);
   margin: 0 auto;
@@ -61,6 +64,7 @@
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
   padding: var(--space-1) 0;
   border-bottom: 1.5px solid transparent;
 }
@@ -124,5 +128,25 @@
 
   .userName {
     display: none;
+  }
+}
+
+/*
+ * At very narrow widths (e.g. 320px "Mobile S" devices) the brand+links group
+ * and the bell+logout group no longer both fit on one line even with the
+ * space above trimmed. Rather than let the text wrap inside the fixed-height
+ * header (which clips and overlaps the page content below it), let the two
+ * groups wrap onto their own rows and let the header grow to fit.
+ */
+@media (max-width: 420px) {
+  .nav {
+    height: auto;
+  }
+
+  .navInner {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
   }
 }
