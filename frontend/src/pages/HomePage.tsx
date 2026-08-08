@@ -10,10 +10,15 @@ export function HomePage() {
   const { user, logout } = useAuth();
   const [rooms, setRooms] = useState<Room[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [minCapacityInput, setMinCapacityInput] = useState('');
+
+  const minCapacity = minCapacityInput ? Number(minCapacityInput) : undefined;
 
   useEffect(() => {
     let cancelled = false;
-    listRooms()
+    setRooms(null);
+    setError(null);
+    listRooms(minCapacity)
       .then((result) => {
         if (!cancelled) setRooms(result);
       })
@@ -25,7 +30,7 @@ export function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [minCapacity]);
 
   return (
     <div className={styles.page}>
@@ -43,9 +48,31 @@ export function HomePage() {
 
       {user && !user.emailConfirmed && <EmailConfirmationBanner />}
 
+      <div className={styles.filterBar}>
+        <label className={styles.filterLabel} htmlFor="min-capacity">
+          Місткість від
+        </label>
+        <input
+          id="min-capacity"
+          type="number"
+          min={1}
+          placeholder="будь-яка"
+          value={minCapacityInput}
+          onChange={(event) => setMinCapacityInput(event.target.value)}
+          className={styles.filterInput}
+        />
+        {minCapacityInput && (
+          <button type="button" className={styles.filterReset} onClick={() => setMinCapacityInput('')}>
+            Скинути
+          </button>
+        )}
+      </div>
+
       {error && <p className={styles.error}>{error}</p>}
       {!error && !rooms && <p role="status">Завантаження кімнат…</p>}
-      {rooms && rooms.length === 0 && <p>Кімнат поки немає.</p>}
+      {rooms && rooms.length === 0 && (
+        <p>{minCapacityInput ? 'Кімнат із такою місткістю немає.' : 'Кімнат поки немає.'}</p>
+      )}
 
       {rooms && rooms.length > 0 && (
         <ul className={styles.roomList}>

@@ -23,8 +23,9 @@ export interface WeeklySchedule {
   bookings: ScheduleBooking[];
 }
 
-export function listRooms(): Promise<Room[]> {
-  return api.get<Room[]>('/rooms');
+export function listRooms(minCapacity?: number): Promise<Room[]> {
+  const query = minCapacity ? `?minCapacity=${minCapacity}` : '';
+  return api.get<Room[]>(`/rooms${query}`);
 }
 
 export function getRoomSchedule(roomId: string, date?: string): Promise<WeeklySchedule> {
