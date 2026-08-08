@@ -1,7 +1,12 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { BookingsService, type CreatedBooking } from './bookings.service';
+import {
+  BookingsService,
+  type CreatedBooking,
+  type CreatedBookingSeries,
+} from './bookings.service';
+import { CreateBookingSeriesDto } from './dto/create-booking-series.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Controller('rooms/:roomId/bookings')
@@ -16,5 +21,14 @@ export class BookingsController {
     @Body() dto: CreateBookingDto,
   ): Promise<CreatedBooking> {
     return this.bookingsService.createBooking(roomId, userId, dto);
+  }
+
+  @Post('series')
+  createSeries(
+    @Param('roomId') roomId: string,
+    @CurrentUserId() userId: string,
+    @Body() dto: CreateBookingSeriesDto,
+  ): Promise<CreatedBookingSeries> {
+    return this.bookingsService.createBookingSeries(roomId, userId, dto);
   }
 }

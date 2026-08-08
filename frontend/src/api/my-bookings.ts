@@ -6,6 +6,7 @@ export interface MyBooking {
   startAt: string;
   endAt: string;
   cancelledAt: string | null;
+  seriesId: string | null;
   room: { id: string; name: string };
 }
 

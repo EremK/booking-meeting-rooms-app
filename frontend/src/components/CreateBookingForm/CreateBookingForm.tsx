@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../api/client';
-import { createBooking, type CreatedBooking } from '../../api/bookings';
+import { createBooking, createBookingSeries, type CreatedBooking } from '../../api/bookings';
 import { getTodayInZone, zonedWallTimeToUtcIso } from '../../lib/timezone';
 import styles from './CreateBookingForm.module.css';
+
+const MIN_OCCURRENCE_COUNT = 2;
+const MAX_OCCURRENCE_COUNT = 52;
+const DEFAULT_OCCURRENCE_COUNT = 8;
 
 interface CreateBookingFormProps {
   roomId: string;
@@ -22,6 +26,8 @@ export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBoo
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [title, setTitle] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [occurrenceCount, setOccurrenceCount] = useState(DEFAULT_OCCURRENCE_COUNT);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +37,8 @@ export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBoo
     setStartTime('');
     setEndTime('');
     setTitle('');
+    setIsRecurring(false);
+    setOccurrenceCount(DEFAULT_OCCURRENCE_COUNT);
     setFieldErrors({});
     setGeneralError(null);
   }
@@ -49,12 +57,15 @@ export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBoo
 
     setIsSubmitting(true);
     try {
-      const booking = await createBooking(roomId, {
-        title,
-        startAt: zonedWallTimeToUtcIso(date, startMinutes, userTimeZone),
-        endAt: zonedWallTimeToUtcIso(date, endMinutes, userTimeZone),
-      });
-      onCreated(booking);
+      const startAt = zonedWallTimeToUtcIso(date, startMinutes, userTimeZone);
+      const endAt = zonedWallTimeToUtcIso(date, endMinutes, userTimeZone);
+      if (isRecurring) {
+        const series = await createBookingSeries(roomId, { title, startAt, endAt, occurrenceCount });
+        onCreated(series.occurrences[0]);
+      } else {
+        const booking = await createBooking(roomId, { title, startAt, endAt });
+        onCreated(booking);
+      }
       resetAndClose();
     } catch (error) {
       if (error instanceof ApiError && error.fieldErrors) {
@@ -151,6 +162,42 @@ export function CreateBookingForm({ roomId, userTimeZone, onCreated }: CreateBoo
             </span>
           ))}
         </div>
+
+        <div className={styles.field}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              disabled={isSubmitting}
+              onChange={(event) => setIsRecurring(event.target.checked)}
+            />
+            Повторювати щотижня
+          </label>
+        </div>
+
+        {isRecurring && (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="booking-occurrence-count">
+              Кількість повторень
+            </label>
+            <input
+              id="booking-occurrence-count"
+              type="number"
+              required
+              min={MIN_OCCURRENCE_COUNT}
+              max={MAX_OCCURRENCE_COUNT}
+              value={occurrenceCount}
+              disabled={isSubmitting}
+              onChange={(event) => setOccurrenceCount(Number(event.target.value))}
+              className={`${styles.input} ${fieldErrors.occurrenceCount ? styles.inputError : ''}`}
+            />
+            {fieldErrors.occurrenceCount?.map((message) => (
+              <span key={message} className={styles.fieldError}>
+                {message}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className={styles.actions}>
           <button type="submit" className={styles.submit} disabled={isSubmitting}>

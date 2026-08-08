@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { cancelBooking } from '../api/bookings';
+import { cancelBooking, cancelBookingSeries } from '../api/bookings';
 import { ApiError } from '../api/client';
 import { listMyBookings, type MyBooking, type MyBookingsPage as MyBookingsPageResult } from '../api/my-bookings';
 import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
@@ -8,6 +8,7 @@ import { formatDateInZone, formatTimeRangeInZone, getDateInZone, getUserTimeZone
 import styles from './MyBookingsPage.module.css';
 
 type Section = 'upcoming' | 'past';
+type CancelMode = 'occurrence' | 'series';
 const PAGE_SIZE = 10;
 
 export function MyBookingsPage() {
@@ -16,7 +17,7 @@ export function MyBookingsPage() {
   const [data, setData] = useState<MyBookingsPageResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookingPendingCancellation, setBookingPendingCancellation] = useState<MyBooking | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<{ booking: MyBooking; mode: CancelMode } | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const userTimeZone = getUserTimeZone();
 
@@ -53,12 +54,16 @@ export function MyBookingsPage() {
   }
 
   async function handleConfirmCancel(): Promise<void> {
-    if (!bookingPendingCancellation) return;
+    if (!cancelTarget) return;
     setIsCancelling(true);
     setError(null);
     try {
-      await cancelBooking(bookingPendingCancellation.id);
-      setBookingPendingCancellation(null);
+      if (cancelTarget.mode === 'series' && cancelTarget.booking.seriesId) {
+        await cancelBookingSeries(cancelTarget.booking.seriesId);
+      } else {
+        await cancelBooking(cancelTarget.booking.id);
+      }
+      setCancelTarget(null);
       load({ cancelled: false });
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : 'Сталася невідома помилка.');
@@ -101,12 +106,20 @@ export function MyBookingsPage() {
                 <span className={styles.time}>{formatTimeRangeInZone(booking.startAt, booking.endAt, userTimeZone)}</span>
                 <span className={styles.room}>{booking.room.name}</span>
                 <span className={styles.bookingTitle}>{booking.title}</span>
+                {booking.seriesId && <span className={styles.recurringBadge}>Серія</span>}
                 {booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
               </Link>
               {section === 'upcoming' && !booking.cancelledAt && (
-                <button type="button" className={styles.cancelButton} onClick={() => setBookingPendingCancellation(booking)}>
-                  Скасувати
-                </button>
+                <div className={styles.rowActions}>
+                  <button type="button" className={styles.cancelButton} onClick={() => setCancelTarget({ booking, mode: 'occurrence' })}>
+                    Скасувати
+                  </button>
+                  {booking.seriesId && (
+                    <button type="button" className={styles.cancelButton} onClick={() => setCancelTarget({ booking, mode: 'series' })}>
+                      Скасувати серію
+                    </button>
+                  )}
+                </div>
               )}
             </li>
           ))}
@@ -128,14 +141,20 @@ export function MyBookingsPage() {
       )}
 
       <ConfirmDialog
-        open={bookingPendingCancellation !== null}
-        title="Скасувати бронювання?"
-        message={bookingPendingCancellation ? `«${bookingPendingCancellation.title}» більше не буде заброньовано.` : ''}
-        confirmLabel="Скасувати бронювання"
+        open={cancelTarget !== null}
+        title={cancelTarget?.mode === 'series' ? 'Скасувати всю серію?' : 'Скасувати бронювання?'}
+        message={
+          cancelTarget
+            ? cancelTarget.mode === 'series'
+              ? `«${cancelTarget.booking.title}» — усі ще активні повторення цієї серії буде скасовано.`
+              : `«${cancelTarget.booking.title}» більше не буде заброньовано.`
+            : ''
+        }
+        confirmLabel={cancelTarget?.mode === 'series' ? 'Скасувати серію' : 'Скасувати бронювання'}
         cancelLabel="Назад"
         isConfirming={isCancelling}
         onConfirm={() => void handleConfirmCancel()}
-        onCancel={() => setBookingPendingCancellation(null)}
+        onCancel={() => setCancelTarget(null)}
       />
     </div>
   );

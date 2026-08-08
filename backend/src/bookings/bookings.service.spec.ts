@@ -17,16 +17,32 @@ const OTHER_USER = { id: 'user-2', name: 'Остап Гайдамака' };
 const FIXED_NOW = new Date('2026-08-04T08:00:00.000Z');
 
 function createMockPrisma() {
-  return {
+  const prisma = {
     room: { findUnique: jest.fn() },
     booking: {
       findMany: jest.fn(),
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       count: jest.fn(),
     },
+    bookingSeries: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn(),
   };
+  // Mirrors Prisma's two `$transaction` call shapes closely enough for unit
+  // tests: an interactive callback run against this same mock client, or an
+  // array of already-issued mock-promise "queries" run concurrently.
+  prisma.$transaction.mockImplementation((arg: unknown) =>
+    typeof arg === 'function'
+      ? (arg as (tx: typeof prisma) => unknown)(prisma)
+      : Promise.all(arg as Promise<unknown>[]),
+  );
+  return prisma;
 }
 
 interface FindManyArgs {
@@ -260,6 +276,106 @@ describe('BookingsService', () => {
     expect(createdData?.endAt).toBeInstanceOf(Date);
   });
 
+  describe('createBookingSeries (BONUS-3)', () => {
+    const SERIES_DTO = {
+      title: 'Щотижневий синк',
+      startAt: '2026-08-05T07:00:00.000Z', // Wed 10:00 Kyiv
+      endAt: '2026-08-05T08:00:00.000Z', // Wed 11:00 Kyiv
+      occurrenceCount: 3,
+    };
+
+    function mockCreatedBooking(occurrenceIndex: number) {
+      const weekOffsetMs = occurrenceIndex * 7 * 24 * 60 * 60 * 1000;
+      return {
+        id: `booking-series-${occurrenceIndex}`,
+        title: SERIES_DTO.title,
+        startAt: new Date(
+          new Date(SERIES_DTO.startAt).getTime() + weekOffsetMs,
+        ),
+        endAt: new Date(new Date(SERIES_DTO.endAt).getTime() + weekOffsetMs),
+        user: USER,
+      };
+    }
+
+    it('rejects an unknown room', async () => {
+      prisma.room.findUnique.mockResolvedValue(null);
+      await expect(
+        service.createBookingSeries('missing-room', USER.id, SERIES_DTO),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('rejects invalid timing on the first occurrence, same as a single booking', async () => {
+      await expect(
+        service.createBookingSeries(ROOM.id, USER.id, {
+          ...SERIES_DTO,
+          startAt: '2026-08-04T07:00:00.000Z', // in the past relative to FIXED_NOW
+          endAt: '2026-08-04T07:30:00.000Z',
+        }),
+      ).rejects.toThrow('Час бронювання має бути в майбутньому');
+    });
+
+    it('rejects when any occurrence overlaps an existing booking', async () => {
+      // Occurrences are checked in order; the 3rd (last) collides, the 1st
+      // and 2nd are otherwise free.
+      prisma.booking.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            startAt: new Date('2026-08-19T07:00:00.000Z'),
+            endAt: new Date('2026-08-19T08:00:00.000Z'),
+          },
+        ]);
+
+      await expect(
+        service.createBookingSeries(ROOM.id, USER.id, SERIES_DTO),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.bookingSeries.create).not.toHaveBeenCalled();
+    });
+
+    it('creates the series and every occurrence, 7 days apart, inside one transaction', async () => {
+      prisma.bookingSeries.create.mockResolvedValue({
+        id: 'series-1',
+        title: SERIES_DTO.title,
+        occurrenceCount: SERIES_DTO.occurrenceCount,
+      });
+      prisma.booking.create.mockImplementation(
+        ({ data }: { data: { occurrenceIndex: number } }) =>
+          Promise.resolve(mockCreatedBooking(data.occurrenceIndex)),
+      );
+
+      const result = await service.createBookingSeries(
+        ROOM.id,
+        USER.id,
+        SERIES_DTO,
+      );
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(result.id).toBe('series-1');
+      expect(result.occurrenceCount).toBe(3);
+      expect(result.occurrences).toHaveLength(3);
+      expect(result.occurrences[0].startAt).toBe('2026-08-05T07:00:00.000Z');
+      expect(result.occurrences[1].startAt).toBe('2026-08-12T07:00:00.000Z');
+      expect(result.occurrences[2].startAt).toBe('2026-08-19T07:00:00.000Z');
+    });
+
+    it('translates a database-level exclusion-constraint rejection into a conflict, rolling back the whole series', async () => {
+      const exclusionViolation = Object.create(
+        Prisma.PrismaClientKnownRequestError.prototype,
+      ) as Record<string, unknown>;
+      exclusionViolation.message = 'Database error';
+      exclusionViolation.code = 'P2039';
+      exclusionViolation.meta = {
+        driverAdapterError: { cause: { originalCode: '23P01' } },
+      };
+      prisma.bookingSeries.create.mockRejectedValue(exclusionViolation);
+
+      await expect(
+        service.createBookingSeries(ROOM.id, USER.id, SERIES_DTO),
+      ).rejects.toThrow('Цей час уже заброньовано');
+    });
+  });
+
   describe('cancelBooking', () => {
     const EXISTING_BOOKING = {
       id: 'booking-1',
@@ -316,6 +432,64 @@ describe('BookingsService', () => {
       expect(result.id).toBe(EXISTING_BOOKING.id);
       expect(updateArgs?.where).toEqual({ id: EXISTING_BOOKING.id });
       expect(updateArgs?.data.cancelledAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('cancelSeries (BONUS-3)', () => {
+    const EXISTING_SERIES = {
+      id: 'series-1',
+      title: 'Щотижневий синк',
+      userId: USER.id,
+      cancelledAt: null as Date | null,
+    };
+
+    it('rejects an unknown series', async () => {
+      prisma.bookingSeries.findUnique.mockResolvedValue(null);
+      await expect(
+        service.cancelSeries('missing-series', USER.id),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it("rejects cancelling someone else's series", async () => {
+      prisma.bookingSeries.findUnique.mockResolvedValue(EXISTING_SERIES);
+      await expect(
+        service.cancelSeries(EXISTING_SERIES.id, OTHER_USER.id),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.bookingSeries.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects cancelling an already-cancelled series', async () => {
+      prisma.bookingSeries.findUnique.mockResolvedValue({
+        ...EXISTING_SERIES,
+        cancelledAt: new Date('2026-08-04T09:00:00.000Z'),
+      });
+      await expect(
+        service.cancelSeries(EXISTING_SERIES.id, USER.id),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('cancels the series and every one of its still-active occurrences', async () => {
+      prisma.bookingSeries.findUnique.mockResolvedValue(EXISTING_SERIES);
+      prisma.bookingSeries.update.mockResolvedValue({
+        ...EXISTING_SERIES,
+        cancelledAt: new Date('2026-08-04T08:00:00.000Z'),
+      });
+      prisma.booking.updateMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.cancelSeries(EXISTING_SERIES.id, USER.id);
+
+      expect(result).toEqual({
+        id: EXISTING_SERIES.id,
+        cancelledOccurrenceCount: 2,
+      });
+      expect(prisma.bookingSeries.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: EXISTING_SERIES.id } }),
+      );
+      expect(prisma.booking.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { seriesId: EXISTING_SERIES.id, cancelledAt: null },
+        }),
+      );
     });
   });
 
