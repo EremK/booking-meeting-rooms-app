@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import type { Room, WeeklySchedule } from '../api/rooms';
 import { HomePage } from './HomePage';
@@ -42,6 +42,10 @@ beforeEach(() => {
   getRoomScheduleMock.mockResolvedValue(emptySchedule());
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('HomePage', () => {
   it('shows a loading indicator before rooms arrive', () => {
     listRoomsMock.mockReturnValue(new Promise(() => {}));
@@ -77,7 +81,12 @@ describe('HomePage', () => {
   });
 
   it('shows "Зайнята" for a room with a booking covering right now', async () => {
-    const now = new Date();
+    // Pin only Date, not timers -- RTL's findByText/waitFor polling still needs real setTimeout.
+    // 13:00 Kyiv (EEST, UTC+3): safely inside 09:00-19:00 regardless of when the suite actually runs.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const now = new Date('2026-08-10T10:00:00.000Z');
+    vi.setSystemTime(now);
+
     const startAt = new Date(now.getTime() - 60_000).toISOString();
     const endAt = new Date(now.getTime() + 60_000).toISOString();
     listRoomsMock.mockResolvedValue([room()]);
