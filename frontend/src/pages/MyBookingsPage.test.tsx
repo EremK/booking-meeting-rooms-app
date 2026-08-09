@@ -71,22 +71,36 @@ describe('MyBookingsPage', () => {
     expect(screen.getByText('Альфа')).toBeInTheDocument();
   });
 
-  it('fetches the "past" section when that tab is clicked, resetting to page 1', async () => {
+  it('fetches only two sections: "upcoming" by default, and "past" when that tab is clicked', async () => {
     renderPage();
-    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 1, 10));
+    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 1, 10, false));
+    expect(screen.queryByText('Скасовані')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Минулі'));
 
-    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('past', 1, 10));
+    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('past', 1, 10, false));
   });
 
-  it('fetches the "cancelled" section when that tab is clicked', async () => {
+  it('requests includeCancelled=true when the "Показувати скасовані" checkbox is checked, and resets to page 1', async () => {
     renderPage();
-    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalled());
+    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 1, 10, false));
 
-    fireEvent.click(screen.getByText('Скасовані'));
+    fireEvent.click(screen.getByLabelText('Показувати скасовані'));
 
-    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('cancelled', 1, 10));
+    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 1, 10, true));
+  });
+
+  it('shows the "Скасовано" badge on a cancelled booking mixed into the upcoming list', async () => {
+    listMyBookingsMock.mockResolvedValue(page([booking({ cancelledAt: '2026-08-09T00:00:00.000Z' })]));
+    renderPage();
+    expect(await screen.findByText('Скасовано')).toBeInTheDocument();
+  });
+
+  it("doesn't show a cancel button for an already-cancelled booking even when mixed into the upcoming list", async () => {
+    listMyBookingsMock.mockResolvedValue(page([booking({ cancelledAt: '2026-08-09T00:00:00.000Z' })]));
+    renderPage();
+    await screen.findByText('Синхронізація команди');
+    expect(screen.queryByText('Скасувати')).not.toBeInTheDocument();
   });
 
   it('only shows the cancel button on the upcoming tab for non-cancelled bookings', async () => {
@@ -134,21 +148,13 @@ describe('MyBookingsPage', () => {
     expect(cancelBookingMock).not.toHaveBeenCalled();
   });
 
-  it("doesn't show a cancel button for a cancelled booking on the cancelled tab", async () => {
-    listMyBookingsMock.mockResolvedValue(page([booking({ cancelledAt: '2026-08-09T00:00:00.000Z' })]));
-    renderPage();
-    fireEvent.click(screen.getByText('Скасовані'));
-    await screen.findByText('Синхронізація команди');
-    expect(screen.queryByText('Скасувати')).not.toBeInTheDocument();
-  });
-
   it('paginates: "Наступна" advances the page and refetches', async () => {
     listMyBookingsMock.mockResolvedValue(page([booking()], { totalCount: 25, hasMore: true }));
     renderPage();
-    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 1, 10));
+    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 1, 10, false));
 
     fireEvent.click(screen.getByText('Наступна →'));
 
-    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 2, 10));
+    await waitFor(() => expect(listMyBookingsMock).toHaveBeenCalledWith('upcoming', 2, 10, false));
   });
 });

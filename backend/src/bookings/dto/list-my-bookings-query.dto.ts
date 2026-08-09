@@ -1,13 +1,13 @@
-import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 const MAX_PAGE_SIZE = 100;
 
 export class ListMyBookingsQueryDto {
-  @IsIn(['upcoming', 'past', 'cancelled'], {
-    message: 'Розділ має бути "upcoming", "past" або "cancelled"',
+  @IsIn(['upcoming', 'past'], {
+    message: 'Розділ має бути "upcoming" або "past"',
   })
-  section!: 'upcoming' | 'past' | 'cancelled';
+  section!: 'upcoming' | 'past';
 
   @IsOptional()
   @Type(() => Number)
@@ -23,4 +23,11 @@ export class ListMyBookingsQueryDto {
     message: `Розмір сторінки має бути не більше ${MAX_PAGE_SIZE}`,
   })
   pageSize: number = 10;
+
+  @IsOptional()
+  @Transform(
+    ({ value }: { value: unknown }) => value === true || value === 'true',
+  )
+  @IsBoolean({ message: 'includeCancelled має бути true або false' })
+  includeCancelled: boolean = false;
 }

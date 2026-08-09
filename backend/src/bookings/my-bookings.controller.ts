@@ -19,6 +19,7 @@ export class MyBookingsController {
       query.section,
       query.page,
       query.pageSize,
+      query.includeCancelled,
     );
   }
 }

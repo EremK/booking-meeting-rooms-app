@@ -7,13 +7,14 @@ import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { formatDateInZone, formatTimeRangeInZone, getDateInZone, getUserTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
 import styles from './MyBookingsPage.module.css';
 
-type Section = 'upcoming' | 'past' | 'cancelled';
+type Section = 'upcoming' | 'past';
 type CancelMode = 'occurrence' | 'series';
 const PAGE_SIZE = 10;
 
 export function MyBookingsPage() {
   const [section, setSection] = useState<Section>('upcoming');
   const [page, setPage] = useState(1);
+  const [showCancelled, setShowCancelled] = useState(false);
   const [data, setData] = useState<MyBookingsPageResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export function MyBookingsPage() {
     (signal: { cancelled: boolean }) => {
       setIsLoading(true);
       setError(null);
-      listMyBookings(section, page, PAGE_SIZE)
+      listMyBookings(section, page, PAGE_SIZE, showCancelled)
         .then((result) => {
           if (!signal.cancelled) setData(result);
         })
@@ -37,7 +38,7 @@ export function MyBookingsPage() {
           if (!signal.cancelled) setIsLoading(false);
         });
     },
-    [section, page],
+    [section, page, showCancelled],
   );
 
   useEffect(() => {
@@ -50,6 +51,11 @@ export function MyBookingsPage() {
 
   function switchSection(next: Section): void {
     setSection(next);
+    setPage(1);
+  }
+
+  function toggleShowCancelled(): void {
+    setShowCancelled((current) => !current);
     setPage(1);
   }
 
@@ -78,20 +84,19 @@ export function MyBookingsPage() {
     <div className={styles.page}>
       <div className={styles.toolbar}>
         <h1 className={styles.title}>Мої бронювання</h1>
-        <div className={styles.tabs}>
-          <button type="button" className={section === 'upcoming' ? styles.tabActive : styles.tab} onClick={() => switchSection('upcoming')}>
-            Майбутні
-          </button>
-          <button type="button" className={section === 'past' ? styles.tabActive : styles.tab} onClick={() => switchSection('past')}>
-            Минулі
-          </button>
-          <button
-            type="button"
-            className={section === 'cancelled' ? styles.tabActive : styles.tab}
-            onClick={() => switchSection('cancelled')}
-          >
-            Скасовані
-          </button>
+        <div className={styles.controls}>
+          <label className={styles.checkboxLabel}>
+            <input type="checkbox" checked={showCancelled} onChange={toggleShowCancelled} />
+            Показувати скасовані
+          </label>
+          <div className={styles.tabs}>
+            <button type="button" className={section === 'upcoming' ? styles.tabActive : styles.tab} onClick={() => switchSection('upcoming')}>
+              Майбутні
+            </button>
+            <button type="button" className={section === 'past' ? styles.tabActive : styles.tab} onClick={() => switchSection('past')}>
+              Минулі
+            </button>
+          </div>
         </div>
       </div>
 
@@ -113,7 +118,7 @@ export function MyBookingsPage() {
                 <span className={styles.bookingTitle}>{booking.title}</span>
                 <span className={styles.badges}>
                   {booking.seriesId && <span className={styles.recurringBadge}>Серія</span>}
-                  {section !== 'cancelled' && booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
+                  {booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
                 </span>
               </Link>
               {section === 'upcoming' && !booking.cancelledAt && (

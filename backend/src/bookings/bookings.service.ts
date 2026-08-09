@@ -336,22 +336,23 @@ export class BookingsService {
 
   async listMyBookings(
     userId: string,
-    section: 'upcoming' | 'past' | 'cancelled',
+    section: 'upcoming' | 'past',
     page: number,
     pageSize: number,
+    includeCancelled: boolean,
   ): Promise<MyBookingsPage> {
     const now = new Date();
+    const cancelledFilter: Prisma.BookingWhereInput = includeCancelled
+      ? {}
+      : { cancelledAt: null };
     let where: Prisma.BookingWhereInput;
     let orderBy: Prisma.BookingOrderByWithRelationInput;
     if (section === 'upcoming') {
-      where = { userId, endAt: { gt: now }, cancelledAt: null };
+      where = { userId, endAt: { gt: now }, ...cancelledFilter };
       orderBy = { startAt: 'asc' };
-    } else if (section === 'past') {
-      where = { userId, endAt: { lte: now }, cancelledAt: null };
-      orderBy = { startAt: 'desc' };
     } else {
-      where = { userId, cancelledAt: { not: null } };
-      orderBy = { cancelledAt: 'desc' };
+      where = { userId, endAt: { lte: now }, ...cancelledFilter };
+      orderBy = { startAt: 'desc' };
     }
 
     const [items, totalCount] = await Promise.all([
