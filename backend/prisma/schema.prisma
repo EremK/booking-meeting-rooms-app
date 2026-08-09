@@ -1,11 +1,3 @@
-// Full domain model, designed up front to cover the mandatory feature set
-// and every bonus item without a later rewrite (see local-docs/PRODUCT-DECISIONS.md §4).
-//
-// Times are always stored as UTC timestamps (`DateTime` -> Postgres `timestamptz`).
-// Office-hours/overlap validation happens in application code against Europe/Kyiv;
-// the DB-level overlap-prevention EXCLUDE constraint (bonus: race-condition
-// protection) is added by a later migration on top of this shape, not a rewrite.
-
 generator client {
   provider     = "prisma-client"
   output       = "../generated/prisma"
@@ -19,11 +11,9 @@ datasource db {
 model User {
   id           String @id @default(uuid())
   name         String
-  /// Always stored lowercased and trimmed so uniqueness is naturally case/whitespace-insensitive.
   email        String @unique
   passwordHash String
 
-  // Bonus: dev-mode email confirmation. Null `emailConfirmedAt` blocks booking creation.
   emailConfirmedAt                DateTime? @db.Timestamptz(3)
   emailConfirmationToken          String?   @unique
   emailConfirmationTokenExpiresAt DateTime? @db.Timestamptz(3)
@@ -49,10 +39,6 @@ model Room {
   @@map("rooms")
 }
 
-/// Bonus: weekly recurring bookings. One row per created series; each occurrence
-/// is a normal Booking row linked back via `seriesId`, so cancelling a single
-/// occurrence vs. the whole series is just cancelling one row vs. this row
-/// plus all its still-active occurrences.
 model BookingSeries {
   id              String    @id @default(uuid())
   roomId          String
@@ -100,8 +86,6 @@ model Booking {
   @@map("bookings")
 }
 
-/// Bonus: end-of-booking notification. `bookingId` is unique so the DB itself
-/// guarantees at most one notification is ever created per booking (exactly-once).
 model Notification {
   id          String    @id @default(uuid())
   bookingId   String    @unique

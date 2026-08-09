@@ -1,10 +1,11 @@
 import { getZonedDateParts, OFFICE_TIMEZONE } from './timezone';
 import type { ScheduleBooking } from '../api/rooms';
 
+/** Must match OFFICE_OPEN_HOUR/OFFICE_CLOSE_HOUR in backend/src/common/office-hours.ts, which is the enforced source of truth. */
 export const OFFICE_OPEN_HOUR = 9;
 export const OFFICE_CLOSE_HOUR = 19;
-export const SLOT_MINUTES = 30;
-export const SLOT_COUNT = ((OFFICE_CLOSE_HOUR - OFFICE_OPEN_HOUR) * 60) / SLOT_MINUTES;
+const SLOT_MINUTES = 30;
+const SLOT_COUNT = ((OFFICE_CLOSE_HOUR - OFFICE_OPEN_HOUR) * 60) / SLOT_MINUTES;
 
 /** YYYY-MM-DD + days, treated as a plain calendar date (no timezone involved). */
 export function addDays(dateIso: string, days: number): string {
@@ -23,10 +24,34 @@ export function getSlotOffsetsMinutes(): number[] {
   return Array.from({ length: SLOT_COUNT }, (_, index) => index * SLOT_MINUTES);
 }
 
-export interface BookingPosition {
+interface BookingPosition {
   dayIndex: number;
   startRow: number;
   endRow: number;
+}
+
+interface RowPosition {
+  dayIndex: number;
+  row: number;
+}
+
+/**
+ * Where a single instant lands on the grid, in office-time (Kyiv) terms:
+ * which day column, and which row (possibly fractional, possibly outside
+ * [0, SLOT_COUNT] if the instant falls outside 09:00-19:00). Null if the
+ * instant's Kyiv calendar date isn't one of the displayed week's columns.
+ */
+function getRowForInstant(isoUtc: string, weekDates: string[]): RowPosition | null {
+  const parts = getZonedDateParts(isoUtc, OFFICE_TIMEZONE);
+  const dateIso = `${parts.year.toString().padStart(4, '0')}-${parts.month.toString().padStart(2, '0')}-${parts.day.toString().padStart(2, '0')}`;
+
+  const dayIndex = weekDates.indexOf(dateIso);
+  if (dayIndex === -1) {
+    return null;
+  }
+
+  const row = ((parts.hour - OFFICE_OPEN_HOUR) * 60 + parts.minute) / SLOT_MINUTES;
+  return { dayIndex, row };
 }
 
 /**
@@ -35,16 +60,19 @@ export interface BookingPosition {
  * (max 4h, always within 09:00-19:00 office hours), so this is unambiguous.
  */
 export function getBookingPosition(booking: ScheduleBooking, weekDates: string[]): BookingPosition | null {
-  const start = getZonedDateParts(booking.startAt, OFFICE_TIMEZONE);
-  const end = getZonedDateParts(booking.endAt, OFFICE_TIMEZONE);
-  const dateIso = `${start.year.toString().padStart(4, '0')}-${start.month.toString().padStart(2, '0')}-${start.day.toString().padStart(2, '0')}`;
-
-  const dayIndex = weekDates.indexOf(dateIso);
-  if (dayIndex === -1) {
+  const start = getRowForInstant(booking.startAt, weekDates);
+  const end = getRowForInstant(booking.endAt, weekDates);
+  if (!start || !end) {
     return null;
   }
+  return { dayIndex: start.dayIndex, startRow: start.row, endRow: end.row };
+}
 
-  const startRow = ((start.hour - OFFICE_OPEN_HOUR) * 60 + start.minute) / SLOT_MINUTES;
-  const endRow = ((end.hour - OFFICE_OPEN_HOUR) * 60 + end.minute) / SLOT_MINUTES;
-  return { dayIndex, startRow, endRow };
+/** The current-time indicator's position, or null if "now" isn't visible on this week/within office hours. */
+export function getNowPosition(now: Date, weekDates: string[]): RowPosition | null {
+  const position = getRowForInstant(now.toISOString(), weekDates);
+  if (!position || position.row < 0 || position.row > SLOT_COUNT) {
+    return null;
+  }
+  return position;
 }

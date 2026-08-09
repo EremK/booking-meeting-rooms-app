@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: booking_meeting_rooms
+    # No host port mapping: the backend reaches this over the internal compose
+    # network as `postgres:5432`, which also sidesteps any local port-5432
+    # conflict with a Postgres install already running on the host.
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U app']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://app:app@postgres:5432/booking_meeting_rooms?schema=public
+      PORT: 3000
+      # Stays "development" on purpose: this compose setup serves plain HTTP
+      # (no TLS termination), and NODE_ENV=production would make the session
+      # cookie `Secure`, which browsers drop over a non-HTTPS connection.
+      NODE_ENV: development
+      FRONTEND_ORIGIN: http://localhost:5173
+      JWT_SECRET: dev-only-secret-change-me
+      JWT_EXPIRES_IN_SECONDS: 604800
+      NOTIFY_BEFORE_MINUTES: 10
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000
+    ports:
+      - '5173:5173'
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:

@@ -1,16 +1,39 @@
+import { useEffect, useState } from 'react';
 import type { ScheduleBooking } from '../../api/rooms';
-import { getBookingPosition, getSlotOffsetsMinutes, OFFICE_OPEN_HOUR } from '../../lib/schedule-grid';
-import { formatDayHeader, formatTimeInZone, formatTimeRangeInZone, kyivMinutesToUtcIso } from '../../lib/timezone';
+import { getBookingPosition, getNowPosition, getSlotOffsetsMinutes, OFFICE_OPEN_HOUR } from '../../lib/schedule-grid';
+import {
+  formatDayHeader,
+  formatTimeInZone,
+  formatTimeRangeInZone,
+  formatWeekdayShort,
+  getDayNumber,
+  getTodayInZone,
+  kyivMinutesToUtcIso,
+  OFFICE_TIMEZONE,
+} from '../../lib/timezone';
 import styles from './WeekGrid.module.css';
+
+const NOW_REFRESH_INTERVAL_MS = 60_000;
 
 interface WeekGridProps {
   weekDates: string[];
   bookings: ScheduleBooking[];
   userTimeZone: string;
+  currentUserId?: string;
+  onCancelBooking?: (booking: ScheduleBooking) => void;
 }
 
-export function WeekGrid({ weekDates, bookings, userTimeZone }: WeekGridProps) {
+export function WeekGrid({ weekDates, bookings, userTimeZone, currentUserId, onCancelBooking }: WeekGridProps) {
   const slotOffsets = getSlotOffsetsMinutes();
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), NOW_REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  const todayKyivDate = getTodayInZone(OFFICE_TIMEZONE);
+  const nowPosition = getNowPosition(now, weekDates);
 
   return (
     <div className={styles.scrollArea}>
@@ -28,25 +51,46 @@ export function WeekGrid({ weekDates, bookings, userTimeZone }: WeekGridProps) {
           const dayBookings = bookings
             .map((booking) => ({ booking, position: getBookingPosition(booking, weekDates) }))
             .filter((entry) => entry.position?.dayIndex === dayIndex);
+          const isToday = date === todayKyivDate;
 
           return (
-            <div key={date} className={styles.dayColumn}>
-              <div className={styles.dayHeader}>{formatDayHeader(date)}</div>
+            <div key={date} className={`${styles.dayColumn} ${isToday ? styles.todayColumn : ''}`}>
+              <div className={styles.dayHeader} aria-label={formatDayHeader(date)}>
+                <span className={styles.weekday}>{formatWeekdayShort(date)}</span>
+                <span className={isToday ? styles.dayNumberToday : styles.dayNumber}>{getDayNumber(date)}</span>
+              </div>
               <div className={styles.dayBody}>
                 {slotOffsets.map((offsetMinutes) => (
                   <div key={offsetMinutes} className={styles.slotCell} />
                 ))}
+                {nowPosition && nowPosition.dayIndex === dayIndex && (
+                  <div className={styles.nowLine} style={{ top: `calc(${nowPosition.row} * var(--slot-height))` }} />
+                )}
                 {dayBookings.map(({ booking, position }) => {
                   const rowSpan = position!.endRow - position!.startRow;
+                  const isOwn = booking.userId === currentUserId;
                   return (
                     <div
                       key={booking.id}
-                      className={styles.booking}
+                      className={`${styles.booking} ${isOwn ? styles.ownBooking : styles.otherBooking}`}
                       style={{
                         top: `calc(${position!.startRow} * var(--slot-height))`,
                         height: `calc(${rowSpan} * var(--slot-height))`,
                       }}
                     >
+                      {isOwn && onCancelBooking && (
+                        <button
+                          type="button"
+                          className={styles.cancelButton}
+                          aria-label="Скасувати бронювання"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onCancelBooking(booking);
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
                       <span className={styles.bookingTime}>{formatTimeRangeInZone(booking.startAt, booking.endAt, userTimeZone)}</span>
                       <span className={styles.bookingTitle}>{booking.title}</span>
                       {/* A single 30-minute row can't fit a third line legibly. */}

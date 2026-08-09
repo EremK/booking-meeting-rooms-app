@@ -1,19 +1,40 @@
+/*
+ * Dark-only design system, deliberately committed to (not a prefers-color-scheme
+ * variant of a light theme). Visual language: near-black/graphite surfaces, warm
+ * off-white text, restrained borders, oxidized-copper accent used sparingly for
+ * primary actions/selection, muted sage-green reserved for availability/success.
+ * See local-docs/design-reference/ for the source references.
+ */
 :root {
-  --color-bg: #f7f7f8;
-  --color-surface: #ffffff;
-  --color-surface-alt: #eef0f2;
-  --color-border: #d8dbe0;
-  --color-text: #1c1f24;
-  --color-text-muted: #5b616b;
-  --color-accent: #2f6f5e;
-  --color-accent-contrast: #ffffff;
-  --color-accent-hover: #285e50;
-  --color-danger: #b3261e;
-  --color-danger-bg: #fbeceb;
-  --color-focus-ring: #2f6f5e;
+  --color-bg: #0b0b0d;
+  --color-surface: #131316;
+  --color-surface-alt: #1a1a1e;
+  --color-surface-hover: #202024;
+  --color-border: #26262b;
+  --color-border-strong: #35353c;
+
+  --color-text: #ece7de;
+  --color-text-muted: #928c81;
+  --color-text-faint: #625d55;
+
+  --color-accent: #c1653a;
+  --color-accent-hover: #d47747;
+  --color-accent-contrast: #fbf3ec;
+  --color-accent-bg: #241a13;
+  --color-accent-border: #4a3423;
+
+  --color-success: #7ea37a;
+  --color-success-bg: #182018;
+  --color-success-border: #33402f;
+
+  --color-danger: #c1655d;
+  --color-danger-bg: #241715;
+  --color-danger-border: #4a2e29;
+
+  --color-focus-ring: #d47747;
 
   --font-sans:
-    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -21,35 +42,22 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --space-7: 48px;
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 
   --content-width-sm: 400px;
+  --content-width-md: 720px;
+  --content-width-lg: 1120px;
 
+  --nav-height: 64px;
   --slot-height: 34px;
-  --day-header-height: 36px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #15171a;
-    --color-surface: #1e2124;
-    --color-surface-alt: #262a2e;
-    --color-border: #383d43;
-    --color-text: #eceff1;
-    --color-text-muted: #9aa1a9;
-    --color-accent: #4f9c86;
-    --color-accent-contrast: #0b1211;
-    --color-accent-hover: #5cae97;
-    --color-danger: #e5837c;
-    --color-danger-bg: #3a2220;
-    --color-focus-ring: #4f9c86;
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
-  }
+  --day-header-height: 40px;
 }
 
 * {
@@ -67,6 +75,7 @@ body {
   font-family: var(--font-sans);
   background: var(--color-bg);
   color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -74,7 +83,34 @@ input {
   font-family: inherit;
 }
 
+a {
+  color: inherit;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-accent-border);
+  color: var(--color-accent-contrast);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-faint);
 }

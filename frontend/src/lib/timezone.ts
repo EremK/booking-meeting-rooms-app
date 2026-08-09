@@ -1,7 +1,13 @@
+/** Must match `OFFICE_TIMEZONE` in backend/src/common/office-hours.ts, which is the enforced source of truth. */
 export const OFFICE_TIMEZONE = 'Europe/Kyiv';
 
 export function getUserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/** Today's calendar date (YYYY-MM-DD) as observed in `timeZone`. */
+export function getTodayInZone(timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
 /**
@@ -38,6 +44,17 @@ export function formatTimeRangeInZone(startIsoUtc: string, endIsoUtc: string, ti
 export function formatDayHeader(dateIso: string): string {
   const date = new Date(`${dateIso}T00:00:00Z`);
   return new Intl.DateTimeFormat('uk-UA', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(date);
+}
+
+/** Short weekday abbreviation ("пн", "вт", ...) for a plain calendar date. */
+export function formatWeekdayShort(dateIso: string): string {
+  const date = new Date(`${dateIso}T00:00:00Z`);
+  return new Intl.DateTimeFormat('uk-UA', { timeZone: 'UTC', weekday: 'short' }).format(date);
+}
+
+/** Day-of-month number for a plain calendar date (YYYY-MM-DD), for the compact day-header badge. */
+export function getDayNumber(dateIso: string): string {
+  return String(Number(dateIso.slice(8, 10)));
 }
 
 interface ZonedDateParts {
@@ -105,15 +122,31 @@ function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
 }
 
 /**
- * Converts a Kyiv wall-clock date + minutes-since-midnight to the UTC instant it
- * represents (DST-aware). Used only for grid label math on the frontend -- the
- * backend is the source of truth for actual booking validation.
+ * Converts a wall-clock date + minutes-since-midnight in `timeZone` to the UTC
+ * instant it represents (DST-aware). Used for grid label math and for turning
+ * a user's local booking-form input into UTC -- the backend is the source of
+ * truth for actual validation either way.
  */
-export function kyivMinutesToUtcIso(dateIso: string, minutesSinceMidnight: number): string {
+export function zonedWallTimeToUtcIso(dateIso: string, minutesSinceMidnight: number, timeZone: string): string {
   const [year, month, day] = dateIso.split('-').map(Number);
   const hour = Math.floor(minutesSinceMidnight / 60);
   const minute = minutesSinceMidnight % 60;
   const naiveUtcMs = Date.UTC(year, month - 1, day, hour, minute);
-  const offsetMs = getTimeZoneOffsetMs(new Date(naiveUtcMs), OFFICE_TIMEZONE);
+  const offsetMs = getTimeZoneOffsetMs(new Date(naiveUtcMs), timeZone);
   return new Date(naiveUtcMs - offsetMs).toISOString();
+}
+
+/** Kyiv-specific convenience wrapper around {@link zonedWallTimeToUtcIso}. */
+export function kyivMinutesToUtcIso(dateIso: string, minutesSinceMidnight: number): string {
+  return zonedWallTimeToUtcIso(dateIso, minutesSinceMidnight, OFFICE_TIMEZONE);
+}
+
+/** A UTC instant's calendar date (YYYY-MM-DD) as observed in `timeZone`. */
+export function getDateInZone(isoUtc: string, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(isoUtc));
+}
+
+/** Human-readable date label ("3 серп. 2026 р.") for a UTC instant, in `timeZone`. */
+export function formatDateInZone(isoUtc: string, timeZone: string): string {
+  return new Intl.DateTimeFormat('uk-UA', { timeZone, day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(isoUtc));
 }

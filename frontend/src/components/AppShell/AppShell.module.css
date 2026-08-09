@@ -1,0 +1,152 @@
+.shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav {
+  height: var(--nav-height);
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* Same max-width/centering as the page content, so the header aligns with it.
+   Positioned so the notifications dropdown (a descendant) can anchor to the
+   full-width header row instead of its own narrow trigger button. */
+.navInner {
+  position: relative;
+  height: 100%;
+  max-width: var(--content-width-lg);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-6);
+}
+
+.navGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.brandMark {
+  display: block;
+  border-radius: 6px;
+}
+
+.brandName {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.link,
+.linkActive {
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  padding: var(--space-1) 0;
+  border-bottom: 1.5px solid transparent;
+}
+
+.link {
+  color: var(--color-text-muted);
+}
+
+.link:hover {
+  color: var(--color-text);
+}
+
+.linkActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+.userName {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutButton {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.logoutButton:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .navInner {
+    padding: 0 var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .navGroup {
+    gap: var(--space-3);
+  }
+
+  .brandName {
+    display: none;
+  }
+
+  .userName {
+    display: none;
+  }
+}
+
+/*
+ * At very narrow widths (e.g. 320px "Mobile S" devices) the brand+links group
+ * and the bell+logout group no longer both fit on one line even with the
+ * space above trimmed. Rather than let the text wrap inside the fixed-height
+ * header (which clips and overlaps the page content below it), let the two
+ * groups wrap onto their own rows and let the header grow to fit.
+ */
+@media (max-width: 420px) {
+  .nav {
+    height: auto;
+  }
+
+  .navInner {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+}

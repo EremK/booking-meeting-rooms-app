@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router';
-import { useAuth } from './AuthContext';
+import { AppShell } from '../components/AppShell/AppShell';
+import { useAuth } from './useAuth';
 
 export function RequireAuth() {
   const { user, isLoading } = useAuth();
@@ -10,5 +11,9 @@ export function RequireAuth() {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  return <Outlet />;
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
 }

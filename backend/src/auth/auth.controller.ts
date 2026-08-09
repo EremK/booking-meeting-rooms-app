@@ -10,15 +10,27 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService, PublicUser } from './auth.service';
 import { SESSION_COOKIE_NAME } from './auth.constants';
 import { CurrentUserId } from './current-user-id.decorator';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 const SESSION_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const LOGIN_ACCOUNT_THROTTLE_LIMIT = 8;
+const LOGIN_ACCOUNT_THROTTLE_TTL_MS = 60_000;
+const REGISTER_ACCOUNT_THROTTLE_LIMIT = 5;
+const REGISTER_ACCOUNT_THROTTLE_TTL_MS = 5 * 60_000;
+/** Public and bodyless apart from the token, so this one is unavoidably IP-keyed -- kept high enough for a whole office. */
+const CONFIRM_EMAIL_THROTTLE_LIMIT = 30;
+const CONFIRM_EMAIL_THROTTLE_TTL_MS = 60_000;
+/** Keyed by the authenticated user, so a tight limit costs a shared office nothing. */
+const RESEND_CONFIRMATION_THROTTLE_LIMIT = 5;
+const RESEND_CONFIRMATION_THROTTLE_TTL_MS = 5 * 60_000;
 
 @Controller('auth')
 export class AuthController {
@@ -28,6 +40,13 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: REGISTER_ACCOUNT_THROTTLE_LIMIT,
+      ttl: REGISTER_ACCOUNT_THROTTLE_TTL_MS,
+    },
+  })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -39,6 +58,13 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: LOGIN_ACCOUNT_THROTTLE_LIMIT,
+      ttl: LOGIN_ACCOUNT_THROTTLE_TTL_MS,
+    },
+  })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -52,6 +78,38 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response): { success: true } {
     res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
+    return { success: true };
+  }
+
+  /** no auth guard -- the link is meant to work from a cold click, session or not. */
+  @Post('confirm-email')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: CONFIRM_EMAIL_THROTTLE_LIMIT,
+      ttl: CONFIRM_EMAIL_THROTTLE_TTL_MS,
+    },
+  })
+  confirmEmail(@Body() dto: ConfirmEmailDto): Promise<PublicUser> {
+    return this.authService.confirmEmail(dto.token);
+  }
+
+  // JwtAuthGuard must stay first: it populates request.userId, which the
+  // throttler's tracker keys on so the limit is per-user, not per-office-IP.
+  @Post('resend-confirmation')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: RESEND_CONFIRMATION_THROTTLE_LIMIT,
+      ttl: RESEND_CONFIRMATION_THROTTLE_TTL_MS,
+    },
+  })
+  async resendConfirmation(
+    @CurrentUserId() userId: string,
+  ): Promise<{ success: true }> {
+    await this.authService.resendConfirmation(userId);
     return { success: true };
   }
 

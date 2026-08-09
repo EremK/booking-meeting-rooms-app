@@ -1,0 +1,41 @@
+import {
+  Body,
+  Controller,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { CurrentUserId } from '../auth/current-user-id.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  BookingsService,
+  type CreatedBooking,
+  type CreatedBookingSeries,
+} from './bookings.service';
+import { CreateBookingSeriesDto } from './dto/create-booking-series.dto';
+import { CreateBookingDto } from './dto/create-booking.dto';
+
+@Controller('rooms/:roomId/bookings')
+@UseGuards(JwtAuthGuard)
+export class BookingsController {
+  constructor(private readonly bookingsService: BookingsService) {}
+
+  @Post()
+  create(
+    @Param('roomId', ParseUUIDPipe) roomId: string,
+    @CurrentUserId() userId: string,
+    @Body() dto: CreateBookingDto,
+  ): Promise<CreatedBooking> {
+    return this.bookingsService.createBooking(roomId, userId, dto);
+  }
+
+  @Post('series')
+  createSeries(
+    @Param('roomId', ParseUUIDPipe) roomId: string,
+    @CurrentUserId() userId: string,
+    @Body() dto: CreateBookingSeriesDto,
+  ): Promise<CreatedBookingSeries> {
+    return this.bookingsService.createBookingSeries(roomId, userId, dto);
+  }
+}

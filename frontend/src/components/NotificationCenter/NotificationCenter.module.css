@@ -1,0 +1,146 @@
+.wrapper {
+  display: inline-flex;
+}
+
+.bellArea {
+  display: inline-flex;
+}
+
+.bellButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.bellButton:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+}
+
+/*
+ * Anchored to .navInner (the positioned ancestor, see AppShell.module.css),
+ * not to .bellArea -- the bell button is too narrow/off-center to anchor a
+ * 320px dropdown against without it overflowing the left edge of the
+ * viewport. The right/width insets mirror .navInner's own horizontal
+ * padding at each breakpoint so the dropdown's edge lines up with the rest
+ * of the nav content.
+ */
+.dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: var(--space-6);
+  width: min(320px, calc(100% - var(--space-6) * 2));
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-3);
+  z-index: 200;
+}
+
+@media (max-width: 640px) {
+  .dropdown {
+    right: var(--space-3);
+    width: min(320px, calc(100% - var(--space-3) * 2));
+  }
+}
+
+.dropdownTitle {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.itemMeta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.toastStack {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(300px, 90vw);
+  z-index: 300;
+}
+
+.toast {
+  border: 1px solid var(--color-accent-border);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-bg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-3);
+}
+
+.toastTitle {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.toastMeta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
