@@ -25,6 +25,12 @@ const LOGIN_ACCOUNT_THROTTLE_LIMIT = 8;
 const LOGIN_ACCOUNT_THROTTLE_TTL_MS = 60_000;
 const REGISTER_ACCOUNT_THROTTLE_LIMIT = 5;
 const REGISTER_ACCOUNT_THROTTLE_TTL_MS = 5 * 60_000;
+/** Public and bodyless apart from the token, so this one is unavoidably IP-keyed -- kept high enough for a whole office. */
+const CONFIRM_EMAIL_THROTTLE_LIMIT = 30;
+const CONFIRM_EMAIL_THROTTLE_TTL_MS = 60_000;
+/** Keyed by the authenticated user, so a tight limit costs a shared office nothing. */
+const RESEND_CONFIRMATION_THROTTLE_LIMIT = 5;
+const RESEND_CONFIRMATION_THROTTLE_TTL_MS = 5 * 60_000;
 
 @Controller('auth')
 export class AuthController {
@@ -78,13 +84,28 @@ export class AuthController {
   /** no auth guard -- the link is meant to work from a cold click, session or not. */
   @Post('confirm-email')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: CONFIRM_EMAIL_THROTTLE_LIMIT,
+      ttl: CONFIRM_EMAIL_THROTTLE_TTL_MS,
+    },
+  })
   confirmEmail(@Body() dto: ConfirmEmailDto): Promise<PublicUser> {
     return this.authService.confirmEmail(dto.token);
   }
 
+  // JwtAuthGuard must stay first: it populates request.userId, which the
+  // throttler's tracker keys on so the limit is per-user, not per-office-IP.
   @Post('resend-confirmation')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: RESEND_CONFIRMATION_THROTTLE_LIMIT,
+      ttl: RESEND_CONFIRMATION_THROTTLE_TTL_MS,
+    },
+  })
   async resendConfirmation(
     @CurrentUserId() userId: string,
   ): Promise<{ success: true }> {
