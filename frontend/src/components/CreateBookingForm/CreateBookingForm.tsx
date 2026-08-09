@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../api/client';
 import { createBooking, createBookingSeries, type CreatedBooking } from '../../api/bookings';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../auth/useAuth';
 import { getTodayInZone, zonedWallTimeToUtcIso } from '../../lib/timezone';
 import styles from './CreateBookingForm.module.css';
 

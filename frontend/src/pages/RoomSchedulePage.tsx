@@ -6,7 +6,7 @@ import { getRoomSchedule, type ScheduleBooking, type WeeklySchedule } from '../a
 import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { CreateBookingForm } from '../components/CreateBookingForm/CreateBookingForm';
 import { WeekGrid } from '../components/WeekGrid/WeekGrid';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { addDays, getWeekDates } from '../lib/schedule-grid';
 import { getTodayInZone, getUserTimeZone, isSameTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
 import styles from './RoomSchedulePage.module.css';

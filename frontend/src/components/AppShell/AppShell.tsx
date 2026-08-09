@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../auth/useAuth';
 import { NotificationCenter } from '../NotificationCenter/NotificationCenter';
 import styles from './AppShell.module.css';
 

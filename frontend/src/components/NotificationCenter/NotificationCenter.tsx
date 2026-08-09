@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../../api/client';
 import { listNotifications, type NotificationDto } from '../../api/notifications';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../auth/useAuth';
 import { formatTimeInZone, getUserTimeZone } from '../../lib/timezone';
 import styles from './NotificationCenter.module.css';
 

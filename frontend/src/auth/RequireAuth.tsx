@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router';
 import { AppShell } from '../components/AppShell/AppShell';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 
 export function RequireAuth() {
   const { user, isLoading } = useAuth();

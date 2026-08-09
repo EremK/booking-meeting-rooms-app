@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ApiError } from '../api/client';
 import { getRoomSchedule, listRooms, type Room } from '../api/rooms';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { EmailConfirmationBanner } from '../components/EmailConfirmationBanner/EmailConfirmationBanner';
 import { getRoomStatus, type RoomStatus } from '../lib/room-status';
 import { formatTimeInZone, getUserTimeZone } from '../lib/timezone';
