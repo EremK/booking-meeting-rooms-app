@@ -1,5 +1,13 @@
 import { DateTime } from 'luxon';
 
+/**
+ * Frontend and backend are separately built/deployed apps with no shared
+ * package, so these three values are necessarily duplicated in
+ * `frontend/src/lib/timezone.ts` (OFFICE_TIMEZONE) and
+ * `frontend/src/lib/schedule-grid.ts` (OFFICE_OPEN_HOUR/OFFICE_CLOSE_HOUR).
+ * The backend is the source of truth -- it's the only side that actually
+ * enforces these as validation rules. Change all four constants together.
+ */
 export const OFFICE_TIMEZONE = 'Europe/Kyiv';
 export const OFFICE_OPEN_HOUR = 9;
 export const OFFICE_CLOSE_HOUR = 19;
@@ -23,7 +31,7 @@ export function kyivWallTimeToUtc(wallTime: {
   return dateTime.toUTC().toJSDate();
 }
 
-export interface KyivWeekBounds {
+interface KyivWeekBounds {
   /** ISO date (YYYY-MM-DD) of the Monday that starts this week, in Kyiv time. */
   weekStartDate: string;
   /** Monday 00:00 Kyiv time, as a UTC instant. */
@@ -55,7 +63,7 @@ export function getKyivWeekBounds(referenceDate?: string): KyivWeekBounds {
   };
 }
 
-export interface KyivDayBounds {
+interface KyivDayBounds {
   dayStartUtc: Date;
   dayEndUtc: Date;
 }

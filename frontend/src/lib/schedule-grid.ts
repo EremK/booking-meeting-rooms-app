@@ -1,10 +1,11 @@
 import { getZonedDateParts, OFFICE_TIMEZONE } from './timezone';
 import type { ScheduleBooking } from '../api/rooms';
 
+/** Must match OFFICE_OPEN_HOUR/OFFICE_CLOSE_HOUR in backend/src/common/office-hours.ts, which is the enforced source of truth. */
 export const OFFICE_OPEN_HOUR = 9;
 export const OFFICE_CLOSE_HOUR = 19;
-export const SLOT_MINUTES = 30;
-export const SLOT_COUNT = ((OFFICE_CLOSE_HOUR - OFFICE_OPEN_HOUR) * 60) / SLOT_MINUTES;
+const SLOT_MINUTES = 30;
+const SLOT_COUNT = ((OFFICE_CLOSE_HOUR - OFFICE_OPEN_HOUR) * 60) / SLOT_MINUTES;
 
 /** YYYY-MM-DD + days, treated as a plain calendar date (no timezone involved). */
 export function addDays(dateIso: string, days: number): string {
@@ -23,7 +24,7 @@ export function getSlotOffsetsMinutes(): number[] {
   return Array.from({ length: SLOT_COUNT }, (_, index) => index * SLOT_MINUTES);
 }
 
-export interface BookingPosition {
+interface BookingPosition {
   dayIndex: number;
   startRow: number;
   endRow: number;
@@ -40,7 +41,7 @@ interface RowPosition {
  * [0, SLOT_COUNT] if the instant falls outside 09:00-19:00). Null if the
  * instant's Kyiv calendar date isn't one of the displayed week's columns.
  */
-export function getRowForInstant(isoUtc: string, weekDates: string[]): RowPosition | null {
+function getRowForInstant(isoUtc: string, weekDates: string[]): RowPosition | null {
   const parts = getZonedDateParts(isoUtc, OFFICE_TIMEZONE);
   const dateIso = `${parts.year.toString().padStart(4, '0')}-${parts.month.toString().padStart(2, '0')}-${parts.day.toString().padStart(2, '0')}`;
 

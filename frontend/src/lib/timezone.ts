@@ -1,3 +1,4 @@
+/** Must match `OFFICE_TIMEZONE` in backend/src/common/office-hours.ts, which is the enforced source of truth. */
 export const OFFICE_TIMEZONE = 'Europe/Kyiv';
 
 export function getUserTimeZone(): string {
