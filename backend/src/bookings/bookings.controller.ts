@@ -1,4 +1,11 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
@@ -16,7 +23,7 @@ export class BookingsController {
 
   @Post()
   create(
-    @Param('roomId') roomId: string,
+    @Param('roomId', ParseUUIDPipe) roomId: string,
     @CurrentUserId() userId: string,
     @Body() dto: CreateBookingDto,
   ): Promise<CreatedBooking> {
@@ -25,7 +32,7 @@ export class BookingsController {
 
   @Post('series')
   createSeries(
-    @Param('roomId') roomId: string,
+    @Param('roomId', ParseUUIDPipe) roomId: string,
     @CurrentUserId() userId: string,
     @Body() dto: CreateBookingSeriesDto,
   ): Promise<CreatedBookingSeries> {

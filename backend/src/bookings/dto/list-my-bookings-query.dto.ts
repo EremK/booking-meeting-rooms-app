@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+
+const MAX_PAGE_SIZE = 100;
 
 export class ListMyBookingsQueryDto {
   @IsIn(['upcoming', 'past'], {
@@ -17,5 +19,8 @@ export class ListMyBookingsQueryDto {
   @Type(() => Number)
   @IsInt({ message: 'Розмір сторінки має бути цілим числом' })
   @Min(1, { message: 'Розмір сторінки має бути не менше 1' })
+  @Max(MAX_PAGE_SIZE, {
+    message: `Розмір сторінки має бути не більше ${MAX_PAGE_SIZE}`,
+  })
   pageSize: number = 10;
 }

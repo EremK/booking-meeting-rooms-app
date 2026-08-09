@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsString, Length } from 'class-validator';
 import { normalizeEmail } from '../../common/normalize-email';
 
 export class LoginDto {
@@ -10,5 +10,6 @@ export class LoginDto {
   email!: string;
 
   @IsString({ message: "Пароль обов'язковий" })
+  @Length(8, 72, { message: 'Пароль має містити від 8 до 72 символів' })
   password!: string;
 }

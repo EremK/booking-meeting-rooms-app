@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetScheduleQueryDto } from './dto/get-schedule-query.dto';
 import { ListRoomsQueryDto } from './dto/list-rooms-query.dto';
@@ -20,7 +27,7 @@ export class RoomsController {
 
   @Get(':roomId/schedule')
   getSchedule(
-    @Param('roomId') roomId: string,
+    @Param('roomId', ParseUUIDPipe) roomId: string,
     @Query() query: GetScheduleQueryDto,
   ): Promise<WeeklySchedule> {
     return this.roomsService.getWeeklySchedule(roomId, query.date);

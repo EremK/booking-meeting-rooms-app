@@ -3,6 +3,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -18,7 +19,7 @@ export class CancelBookingController {
   @Post(':bookingId/cancel')
   @HttpCode(HttpStatus.OK)
   cancel(
-    @Param('bookingId') bookingId: string,
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
     @CurrentUserId() userId: string,
   ): Promise<CreatedBooking> {
     return this.bookingsService.cancelBooking(bookingId, userId);

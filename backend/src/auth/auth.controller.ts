@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService, PublicUser } from './auth.service';
 import { SESSION_COOKIE_NAME } from './auth.constants';
@@ -20,6 +21,10 @@ import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 const SESSION_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const LOGIN_ACCOUNT_THROTTLE_LIMIT = 8;
+const LOGIN_ACCOUNT_THROTTLE_TTL_MS = 60_000;
+const REGISTER_ACCOUNT_THROTTLE_LIMIT = 5;
+const REGISTER_ACCOUNT_THROTTLE_TTL_MS = 5 * 60_000;
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +34,13 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: REGISTER_ACCOUNT_THROTTLE_LIMIT,
+      ttl: REGISTER_ACCOUNT_THROTTLE_TTL_MS,
+    },
+  })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -40,6 +52,13 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    account: {
+      limit: LOGIN_ACCOUNT_THROTTLE_LIMIT,
+      ttl: LOGIN_ACCOUNT_THROTTLE_TTL_MS,
+    },
+  })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
