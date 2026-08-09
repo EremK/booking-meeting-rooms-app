@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BookingsService } from './bookings.service';
 
 const ROOM = { id: 'room-1', name: 'Альфа', floor: 1, capacity: 4 };
-const USER = { id: 'user-1', name: 'Марія Шевченко' };
+const USER = { id: 'user-1', name: 'Ганна Кузьменко' };
 const OTHER_USER = { id: 'user-2', name: 'Остап Гайдамака' };
 
 // A fixed "now" (Tuesday, Kyiv summer time) so booking-time math is deterministic

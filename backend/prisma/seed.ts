@@ -23,7 +23,7 @@ const ROOMS = [
 ];
 
 const USERS = [
-  { name: 'Марія Шевченко', email: 'maria.shevchenko@example.com' },
+  { name: 'Ганна Кузьменко', email: 'hanna.kuzmenko@example.com' },
   { name: 'Остап Гайдамака', email: 'ostap.haidamaka@example.com' },
 ];
 
@@ -44,8 +44,36 @@ interface DemoBooking {
 function buildDemoBookings(): DemoBooking[] {
   return [
     {
+      roomName: 'Дельта',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Огляд якості коду',
+      start: kyivDaysFromNowAt(-10, 10, 0),
+      end: kyivDaysFromNowAt(-10, 11, 0),
+    },
+    {
+      roomName: 'Епсилон',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Зустріч з інвестором',
+      start: kyivDaysFromNowAt(-8, 14, 0),
+      end: kyivDaysFromNowAt(-8, 15, 0),
+    },
+    {
+      roomName: 'Альфа',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Навчання нового співробітника',
+      start: kyivDaysFromNowAt(-6, 9, 30),
+      end: kyivDaysFromNowAt(-6, 11, 0),
+    },
+    {
+      roomName: 'Омега',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Підбиття підсумків місяця',
+      start: kyivDaysFromNowAt(-4, 16, 0),
+      end: kyivDaysFromNowAt(-4, 17, 0),
+    },
+    {
       roomName: 'Гамма',
-      userEmail: 'maria.shevchenko@example.com',
+      userEmail: 'hanna.kuzmenko@example.com',
       title: 'Ретроспектива спринту',
       start: kyivDaysFromNowAt(-3, 10, 0),
       end: kyivDaysFromNowAt(-3, 11, 0),
@@ -58,15 +86,20 @@ function buildDemoBookings(): DemoBooking[] {
       end: kyivDaysFromNowAt(-1, 14, 30),
     },
     {
+      roomName: 'Гамма',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Щотижневий синк команди',
+      start: kyivDaysFromNowAt(0, 16, 0),
+      end: kyivDaysFromNowAt(0, 16, 30),
+    },
+    {
       roomName: 'Альфа',
-      userEmail: 'maria.shevchenko@example.com',
+      userEmail: 'hanna.kuzmenko@example.com',
       title: 'Синхронізація команди',
       start: kyivDaysFromNowAt(1, 9, 30),
       end: kyivDaysFromNowAt(1, 10, 0),
     },
     {
-      // Back-to-back with the booking above, different author -- exercises both
-      // the adjacency rule and "own vs. others'" grid styling.
       roomName: 'Альфа',
       userEmail: 'ostap.haidamaka@example.com',
       title: 'Співбесіда з кандидатом',
@@ -75,10 +108,24 @@ function buildDemoBookings(): DemoBooking[] {
     },
     {
       roomName: 'Епсилон',
-      userEmail: 'maria.shevchenko@example.com',
+      userEmail: 'hanna.kuzmenko@example.com',
       title: 'Демо продукту для інвесторів',
       start: kyivDaysFromNowAt(2, 13, 0),
       end: kyivDaysFromNowAt(2, 14, 30),
+    },
+    {
+      roomName: 'Бета',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Огляд бюджету відділу',
+      start: kyivDaysFromNowAt(3, 11, 0),
+      end: kyivDaysFromNowAt(3, 12, 0),
+    },
+    {
+      roomName: 'Дельта',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Співбесіда: Product Manager',
+      start: kyivDaysFromNowAt(4, 10, 0),
+      end: kyivDaysFromNowAt(4, 11, 0),
     },
     {
       roomName: 'Омега',
@@ -86,6 +133,62 @@ function buildDemoBookings(): DemoBooking[] {
       title: 'Планування спринту',
       start: kyivDaysFromNowAt(5, 11, 0),
       end: kyivDaysFromNowAt(5, 12, 0),
+    },
+    {
+      roomName: 'Дельта',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Знайомство з новим клієнтом',
+      start: kyivDaysFromNowAt(6, 15, 0),
+      end: kyivDaysFromNowAt(6, 16, 0),
+    },
+    {
+      roomName: 'Гамма',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Ретро по кварталу',
+      start: kyivDaysFromNowAt(7, 10, 0),
+      end: kyivDaysFromNowAt(7, 11, 0),
+    },
+    {
+      roomName: 'Епсилон',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Технічний огляд архітектури',
+      start: kyivDaysFromNowAt(8, 13, 0),
+      end: kyivDaysFromNowAt(8, 14, 0),
+    },
+    {
+      roomName: 'Альфа',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Нарада з постачальником',
+      start: kyivDaysFromNowAt(9, 9, 0),
+      end: kyivDaysFromNowAt(9, 10, 0),
+    },
+    {
+      roomName: 'Бета',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Планування маркетингової кампанії',
+      start: kyivDaysFromNowAt(10, 14, 0),
+      end: kyivDaysFromNowAt(10, 15, 0),
+    },
+    {
+      roomName: 'Гамма',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Особиста зустріч з керівником',
+      start: kyivDaysFromNowAt(11, 16, 30),
+      end: kyivDaysFromNowAt(11, 17, 0),
+    },
+    {
+      roomName: 'Омега',
+      userEmail: 'hanna.kuzmenko@example.com',
+      title: 'Демонстрація нового функціоналу',
+      start: kyivDaysFromNowAt(12, 11, 0),
+      end: kyivDaysFromNowAt(12, 12, 30),
+    },
+    {
+      roomName: 'Дельта',
+      userEmail: 'ostap.haidamaka@example.com',
+      title: 'Огляд контракту з партнером',
+      start: kyivDaysFromNowAt(13, 9, 30),
+      end: kyivDaysFromNowAt(13, 10, 30),
     },
   ];
 }

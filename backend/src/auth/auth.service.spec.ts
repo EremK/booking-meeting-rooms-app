@@ -61,23 +61,23 @@ describe('AuthService', () => {
       const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
       const result = await authService.register({
-        name: 'Марія Шевченко',
-        email: '  Maria.Shevchenko@Example.com  ',
+        name: 'Ганна Кузьменко',
+        email: '  Hanna.Kuzmenko@Example.com  ',
         password: 'password123',
       });
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'maria.shevchenko@example.com' },
+        where: { email: 'hanna.kuzmenko@example.com' },
       });
-      expect(createdData?.email).toBe('maria.shevchenko@example.com');
+      expect(createdData?.email).toBe('hanna.kuzmenko@example.com');
       expect(createdData?.passwordHash).not.toBe('password123');
       expect(
         await bcrypt.compare('password123', createdData?.passwordHash ?? ''),
       ).toBe(true);
       expect(result).toEqual({
         id: 'user-1',
-        name: 'Марія Шевченко',
-        email: 'maria.shevchenko@example.com',
+        name: 'Ганна Кузьменко',
+        email: 'hanna.kuzmenko@example.com',
         emailConfirmed: false,
       });
       logSpy.mockRestore();
@@ -99,8 +99,8 @@ describe('AuthService', () => {
       const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
       await authService.register({
-        name: 'Марія Шевченко',
-        email: 'maria.shevchenko@example.com',
+        name: 'Ганна Кузьменко',
+        email: 'hanna.kuzmenko@example.com',
         password: 'password123',
       });
 
@@ -150,14 +150,14 @@ describe('AuthService', () => {
       const passwordHash = await bcrypt.hash('correct-password', 10);
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
-        name: 'Марія Шевченко',
-        email: 'maria.shevchenko@example.com',
+        name: 'Ганна Кузьменко',
+        email: 'hanna.kuzmenko@example.com',
         passwordHash,
       });
 
       await expect(
         authService.validateCredentials({
-          email: 'maria.shevchenko@example.com',
+          email: 'hanna.kuzmenko@example.com',
           password: 'wrong-password',
         }),
       ).rejects.toBeInstanceOf(UnauthorizedException);
@@ -167,21 +167,21 @@ describe('AuthService', () => {
       const passwordHash = await bcrypt.hash('password123', 10);
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
-        name: 'Марія Шевченко',
-        email: 'maria.shevchenko@example.com',
+        name: 'Ганна Кузьменко',
+        email: 'hanna.kuzmenko@example.com',
         passwordHash,
         emailConfirmedAt: new Date('2026-08-01T00:00:00.000Z'),
       });
 
       const result = await authService.validateCredentials({
-        email: '  Maria.Shevchenko@Example.com',
+        email: '  Hanna.Kuzmenko@Example.com',
         password: 'password123',
       });
 
       expect(result).toEqual({
         id: 'user-1',
-        name: 'Марія Шевченко',
-        email: 'maria.shevchenko@example.com',
+        name: 'Ганна Кузьменко',
+        email: 'hanna.kuzmenko@example.com',
         emailConfirmed: true,
       });
     });
@@ -190,14 +190,14 @@ describe('AuthService', () => {
       const passwordHash = await bcrypt.hash('password123', 10);
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
-        name: 'Марія Шевченко',
-        email: 'maria.shevchenko@example.com',
+        name: 'Ганна Кузьменко',
+        email: 'hanna.kuzmenko@example.com',
         passwordHash,
         emailConfirmedAt: null,
       });
 
       const result = await authService.validateCredentials({
-        email: 'maria.shevchenko@example.com',
+        email: 'hanna.kuzmenko@example.com',
         password: 'password123',
       });
 
@@ -208,8 +208,8 @@ describe('AuthService', () => {
   describe('confirmEmail', () => {
     const UNCONFIRMED_USER = {
       id: 'user-1',
-      name: 'Марія Шевченко',
-      email: 'maria.shevchenko@example.com',
+      name: 'Ганна Кузьменко',
+      email: 'hanna.kuzmenko@example.com',
       passwordHash: 'irrelevant',
       emailConfirmedAt: null as Date | null,
       emailConfirmationToken: 'valid-token',
@@ -265,7 +265,7 @@ describe('AuthService', () => {
     it('rejects an already-confirmed account', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
-        email: 'maria.shevchenko@example.com',
+        email: 'hanna.kuzmenko@example.com',
         emailConfirmedAt: new Date(),
       });
       await expect(
@@ -277,7 +277,7 @@ describe('AuthService', () => {
     it('issues a fresh token and logs a new confirmation link', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
-        email: 'maria.shevchenko@example.com',
+        email: 'hanna.kuzmenko@example.com',
         emailConfirmedAt: null,
       });
       const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
