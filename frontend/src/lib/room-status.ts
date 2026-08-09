@@ -1,8 +1,8 @@
 import type { ScheduleBooking } from '../api/rooms';
 import { OFFICE_CLOSE_HOUR, OFFICE_OPEN_HOUR } from './schedule-grid';
-import { getDateInZone, getTodayInZone, getZonedDateParts, OFFICE_TIMEZONE } from './timezone';
+import { getDateInZone, getZonedDateParts, OFFICE_TIMEZONE } from './timezone';
 
-export interface TimelineBlock {
+interface TimelineBlock {
   startFraction: number;
   endFraction: number;
 }
@@ -23,9 +23,9 @@ function officeMinutes(isoUtc: string): number {
   return (parts.hour - OFFICE_OPEN_HOUR) * 60 + parts.minute;
 }
 
-/** Active bookings (the schedule API already excludes cancelled ones) whose Kyiv calendar date is today. */
-export function getTodaysBookings(bookings: ScheduleBooking[]): ScheduleBooking[] {
-  const today = getTodayInZone(OFFICE_TIMEZONE);
+/** Active bookings (the schedule API already excludes cancelled ones) whose Kyiv calendar date matches `now`. */
+function getTodaysBookings(bookings: ScheduleBooking[], now: Date): ScheduleBooking[] {
+  const today = getDateInZone(now.toISOString(), OFFICE_TIMEZONE);
   return bookings
     .filter((booking) => getDateInZone(booking.startAt, OFFICE_TIMEZONE) === today)
     .slice()
@@ -34,7 +34,7 @@ export function getTodaysBookings(bookings: ScheduleBooking[]): ScheduleBooking[
 
 /** Derives a room's live status (available now / next booking / mini timeline) from its weekly schedule. */
 export function getRoomStatus(bookings: ScheduleBooking[], now: Date = new Date()): RoomStatus {
-  const todaysBookings = getTodaysBookings(bookings);
+  const todaysBookings = getTodaysBookings(bookings, now);
   const nowMinutes = officeMinutes(now.toISOString());
   const withinOfficeHours = nowMinutes >= 0 && nowMinutes < OFFICE_DAY_MINUTES;
 
