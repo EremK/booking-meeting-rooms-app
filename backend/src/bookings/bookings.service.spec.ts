@@ -56,8 +56,12 @@ function createMockNotificationsService() {
 }
 
 interface FindManyArgs {
-  where: { userId: string; endAt: { gt?: Date; lte?: Date } };
-  orderBy: { startAt: 'asc' | 'desc' };
+  where: {
+    userId: string;
+    endAt?: { gt?: Date; lte?: Date };
+    cancelledAt?: null | { not: null };
+  };
+  orderBy: { startAt: 'asc' | 'desc' } | { cancelledAt: 'asc' | 'desc' };
   skip: number;
   take: number;
 }
@@ -581,44 +585,51 @@ describe('BookingsService', () => {
   });
 
   describe('listMyBookings', () => {
-    it('queries only bookings ending after now for "upcoming", sorted soonest-first', async () => {
+    it('queries only non-cancelled bookings ending after now for "upcoming", sorted soonest-first', async () => {
       const captured = captureFindManyArgs(prisma.booking.findMany, []);
       prisma.booking.count.mockResolvedValue(0);
 
       await service.listMyBookings(USER.id, 'upcoming', 1, 10);
 
       expect(captured.args?.where.userId).toBe(USER.id);
-      expect(captured.args?.where.endAt.gt).toBeInstanceOf(Date);
-      expect(captured.args?.where.endAt.lte).toBeUndefined();
+      expect(captured.args?.where.endAt?.gt).toBeInstanceOf(Date);
+      expect(captured.args?.where.endAt?.lte).toBeUndefined();
+      expect(captured.args?.where.cancelledAt).toBeNull();
       expect(captured.args?.orderBy).toEqual({ startAt: 'asc' });
     });
 
-    it('queries only bookings that already ended for "past", sorted most-recent-first', async () => {
+    it('queries only non-cancelled bookings that already ended for "past", sorted most-recent-first', async () => {
       const captured = captureFindManyArgs(prisma.booking.findMany, []);
       prisma.booking.count.mockResolvedValue(0);
 
       await service.listMyBookings(USER.id, 'past', 1, 10);
 
-      expect(captured.args?.where.endAt.lte).toBeInstanceOf(Date);
-      expect(captured.args?.where.endAt.gt).toBeUndefined();
+      expect(captured.args?.where.endAt?.lte).toBeInstanceOf(Date);
+      expect(captured.args?.where.endAt?.gt).toBeUndefined();
+      expect(captured.args?.where.cancelledAt).toBeNull();
       expect(captured.args?.orderBy).toEqual({ startAt: 'desc' });
     });
 
-    it('includes cancelled bookings, with cancelledAt populated', async () => {
-      prisma.booking.findMany.mockResolvedValue([
+    it('queries only cancelled bookings for "cancelled", regardless of endAt, sorted most-recently-cancelled-first', async () => {
+      const captured = captureFindManyArgs(prisma.booking.findMany, [
         {
           id: 'booking-3',
           title: 'Скасована зустріч',
           startAt: new Date('2026-08-10T07:00:00.000Z'),
           endAt: new Date('2026-08-10T08:00:00.000Z'),
           cancelledAt: new Date('2026-08-04T09:00:00.000Z'),
+          seriesId: null,
           room: ROOM,
         },
       ]);
       prisma.booking.count.mockResolvedValue(1);
 
-      const result = await service.listMyBookings(USER.id, 'upcoming', 1, 10);
+      const result = await service.listMyBookings(USER.id, 'cancelled', 1, 10);
 
+      expect(captured.args?.where.userId).toBe(USER.id);
+      expect(captured.args?.where.endAt).toBeUndefined();
+      expect(captured.args?.where.cancelledAt).toEqual({ not: null });
+      expect(captured.args?.orderBy).toEqual({ cancelledAt: 'desc' });
       expect(result.items[0].cancelledAt).toBe('2026-08-04T09:00:00.000Z');
     });
 

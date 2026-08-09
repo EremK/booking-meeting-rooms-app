@@ -18,6 +18,10 @@ export interface MyBookingsPage {
   hasMore: boolean;
 }
 
-export function listMyBookings(section: 'upcoming' | 'past', page: number, pageSize: number): Promise<MyBookingsPage> {
+export function listMyBookings(
+  section: 'upcoming' | 'past' | 'cancelled',
+  page: number,
+  pageSize: number,
+): Promise<MyBookingsPage> {
   return api.get<MyBookingsPage>(`/bookings/me?section=${section}&page=${page}&pageSize=${pageSize}`);
 }

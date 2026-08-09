@@ -4,10 +4,10 @@ import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 const MAX_PAGE_SIZE = 100;
 
 export class ListMyBookingsQueryDto {
-  @IsIn(['upcoming', 'past'], {
-    message: 'Розділ має бути "upcoming" або "past"',
+  @IsIn(['upcoming', 'past', 'cancelled'], {
+    message: 'Розділ має бути "upcoming", "past" або "cancelled"',
   })
-  section!: 'upcoming' | 'past';
+  section!: 'upcoming' | 'past' | 'cancelled';
 
   @IsOptional()
   @Type(() => Number)

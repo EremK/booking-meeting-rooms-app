@@ -7,7 +7,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { formatDateInZone, formatTimeRangeInZone, getDateInZone, getUserTimeZone, OFFICE_TIMEZONE } from '../lib/timezone';
 import styles from './MyBookingsPage.module.css';
 
-type Section = 'upcoming' | 'past';
+type Section = 'upcoming' | 'past' | 'cancelled';
 type CancelMode = 'occurrence' | 'series';
 const PAGE_SIZE = 10;
 
@@ -85,6 +85,13 @@ export function MyBookingsPage() {
           <button type="button" className={section === 'past' ? styles.tabActive : styles.tab} onClick={() => switchSection('past')}>
             Минулі
           </button>
+          <button
+            type="button"
+            className={section === 'cancelled' ? styles.tabActive : styles.tab}
+            onClick={() => switchSection('cancelled')}
+          >
+            Скасовані
+          </button>
         </div>
       </div>
 
@@ -106,7 +113,7 @@ export function MyBookingsPage() {
                 <span className={styles.bookingTitle}>{booking.title}</span>
                 <span className={styles.badges}>
                   {booking.seriesId && <span className={styles.recurringBadge}>Серія</span>}
-                  {booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
+                  {section !== 'cancelled' && booking.cancelledAt && <span className={styles.cancelledBadge}>Скасовано</span>}
                 </span>
               </Link>
               {section === 'upcoming' && !booking.cancelledAt && (

@@ -334,26 +334,25 @@ export class BookingsService {
     }
   }
 
-  /**
-   * A user's own bookings, including cancelled ones (shown with a badge in
-   * "Мої бронювання" -- unlike the room grid, which hides cancelled slots).
-   * "upcoming" vs "past" is based on `endAt`, so a booking currently in
-   * progress still counts as upcoming until it actually ends.
-   */
   async listMyBookings(
     userId: string,
-    section: 'upcoming' | 'past',
+    section: 'upcoming' | 'past' | 'cancelled',
     page: number,
     pageSize: number,
   ): Promise<MyBookingsPage> {
     const now = new Date();
-    const where =
-      section === 'upcoming'
-        ? { userId, endAt: { gt: now } }
-        : { userId, endAt: { lte: now } };
-    const orderBy = {
-      startAt: section === 'upcoming' ? ('asc' as const) : ('desc' as const),
-    };
+    let where: Prisma.BookingWhereInput;
+    let orderBy: Prisma.BookingOrderByWithRelationInput;
+    if (section === 'upcoming') {
+      where = { userId, endAt: { gt: now }, cancelledAt: null };
+      orderBy = { startAt: 'asc' };
+    } else if (section === 'past') {
+      where = { userId, endAt: { lte: now }, cancelledAt: null };
+      orderBy = { startAt: 'desc' };
+    } else {
+      where = { userId, cancelledAt: { not: null } };
+      orderBy = { cancelledAt: 'desc' };
+    }
 
     const [items, totalCount] = await Promise.all([
       this.prisma.booking.findMany({
